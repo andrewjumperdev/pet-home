@@ -3,14 +3,11 @@ import AnimatedPaw from './AnimatedPaw';
 
 const PawPrintsTrail: React.FC = () => {
   const [pawPositions, setPawPositions] = useState<any[]>([]);
-  const [isMoving, setIsMoving] = useState<boolean>(false);
-  const [lastPosition, setLastPosition] = useState<any>(null);
+
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const newPosition = { x: e.clientX, y: e.clientY };
-      setIsMoving(true);
-      setLastPosition(newPosition);
 
 
       setPawPositions((prevPositions) => {
