@@ -19,7 +19,7 @@ const AnimatedPaw: React.FC = () => {
   return (
     <img
       ref={pawRef}
-      src="/paws.png"
+      src="https://i.ibb.co/JW3nKrKx/paws.png"
       alt="Paw"
       className="w-6 h-6"
     />
