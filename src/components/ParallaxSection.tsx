@@ -1,30 +1,37 @@
+'use client';
+
 import React, { useEffect } from 'react';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const ParallaxSection: React.FC = () => {
-//   useEffect(() => {
-//     gsap.to('.parallax-bg', {
-//       y: 120,
-//       ease: 'none',
-//       scrollTrigger: {
-//         trigger: '.parallax',
-//         start: 'top bottom',
-//         end: 'bottom top',
-//         scrub: true
-//       }
-//     });
+  useEffect(() => {
+    // Fondo que se mueve con scroll (efecto parallax)
+    gsap.to('.parallax-bg', {
+      y: 120,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: '.parallax',
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: true,
+      },
+    });
 
-//     gsap.from('.parallax-text', {
-//       opacity: 0,
-//       y: 30,
-//       duration: 1,
-//       ease: 'power2.out',
-//       scrollTrigger: {
-//         trigger: '.parallax',
-//         start: 'top 80%'
-//       }
-//     });
-//   }, []);
+    // Texto que aparece suavemente
+    gsap.from('.parallax-text', {
+      opacity: 0,
+      y: 30,
+      duration: 1,
+      ease: 'power2.out',
+      scrollTrigger: {
+        trigger: '.parallax',
+        start: 'top 80%',
+      },
+    });
+  }, []);
 
   return (
     <section className="parallax relative py-16 bg-gray-100 overflow-hidden">

@@ -1,32 +1,14 @@
-import React, { useEffect } from "react";
+import React from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/all";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const Features: React.FC = () => {
-//   useEffect(() => {
-//     gsap.utils.toArray(".feature-card").forEach((card) => {
-//         gsap.from(card as HTMLElement, {
-//             opacity: 0,
-//             y: 40,
-//             scale: 0.95,
-//             duration: 1,
-//             ease: 'power3.out',
-//             force3D: true,
-//             scrollTrigger: {
-//               trigger: card as HTMLElement,
-//               start: 'top 80%',
-//               end: 'bottom 20%'
-//             }
-//           });
-//     });
-//   }, []);
-
   return (
     <section className="py-12 px-4">
       <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-orange-600">
-        Para tus peludos
+        Pour vos amis à quatre pattes
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {[

@@ -19,3 +19,32 @@ html {
   .hero-bg { background-position: 70% center; }
   .parallax-bg { background-position: 60% center; }
 }
+
+@keyframes fadeTrail {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+.animated-paw {
+  position: absolute;
+  opacity: 0;
+  animation: fadeTrail 1.5s ease-out forwards;
+  width: 40px;
+  height: 40px;
+  z-index: 100;
+}
+
+.paw-container {
+  position: absolute;
+  pointer-events: none;
+}
