@@ -8,6 +8,8 @@ module.exports = {
         // Personalizaciones aquí
       },
     },
-    plugins: [],
+    plugins: [
+      require('tailwind-scrollbar-hide')
+    ],
   };
   

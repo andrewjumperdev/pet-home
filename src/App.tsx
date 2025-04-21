@@ -1,9 +1,14 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import Hero from './components/Hero';
-import Features from './components/Features';
-import ParallaxSection from './components/ParallaxSection';
-import CTA from './components/CTA';
+import { Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+
+import Home from './pages/Home';
+import Services from './pages/Services';
+import Tarifs from './pages/Tarifs';
+import Temoignages from './pages/Temoignages';
+import APropos from './pages/Apropos';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -15,16 +20,32 @@ const App: React.FC = () => {
       <Helmet>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="description" content="Cuidado de perros y gatos en casa con amor y diversión - PetHome, tu guardería de mascotas ideal" />
-        <meta name="keywords" content="cuidado mascotas, guardería perros, pet sitter, cuidado gatos" />
+        <meta
+          name="description"
+          content="Cuidado de perros y gatos en casa con amor y diversión - PetHome, tu guardería de mascotas ideal"
+        />
+        <meta
+          name="keywords"
+          content="cuidado mascotas, guardería perros, pet sitter, cuidado gatos"
+        />
         <meta name="robots" content="index, follow" />
         <title>PetHome - El Hogar de tus Perros y Gatos</title>
       </Helmet>
+
       <div className="min-h-screen flex flex-col bg-yellow-50">
-        <Hero />
-        <Features />
-        <ParallaxSection />
-        <CTA />
+        <Navbar />
+
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/tarifs" element={<Tarifs />} />
+            <Route path="/temoignages" element={<Temoignages />} />
+            <Route path="/apropos" element={<APropos />} />
+          </Routes>
+        </main>
+
+        <Footer />
       </div>
     </>
   );
