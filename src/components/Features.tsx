@@ -8,24 +8,24 @@ const Features: React.FC = () => {
   return (
     <section className="py-12 px-4">
       <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-orange-600">
-        Pour vos amis à quatre pattes
+        ON VOUS GARANTIT
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {[
           {
             emoji: "🐶🐱",
-            title: "Cariño Total",
-            desc: "Atención para perros y gatos",
+            title: "Une garderie exclusive",
+            desc: "avec les animaux d’un seul propriétaire à la fois",
           },
           {
             emoji: "🏞️",
-            title: "Jardín Seguro",
-            desc: "Espacio para explorar",
+            title: "Au minimum 3 longues promenades",
+            desc: "dans de grands espaces au pieds de notre immeuble",
           },
           {
             emoji: "📷",
-            title: "Fotos Diarias",
-            desc: "Mira cómo se divierten",
+            title: "Photos quotidiennes et communication 7j/7",
+            desc: "Regardez-les s'amuser et se détendre",
           },
         ].map((feat, i) => (
           <div

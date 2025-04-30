@@ -1,15 +1,22 @@
 module.exports = {
-    content: [
-      "./index.html",
-      "./src/**/*.{js,ts,jsx,tsx}"
-    ],
-    theme: {
-      extend: {
-        // Personalizaciones aquí
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      keyframes: {
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
+      animation: {
+        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+        'float-slow': 'float 4s ease-in-out infinite',
+      },
+    
     },
-    plugins: [
-      require('tailwind-scrollbar-hide')
-    ],
-  };
-  
+  },
+  corePlugins: {
+    scrollBehavior: true,
+  },
+  plugins: [require("tailwind-scrollbar-hide")],
+};

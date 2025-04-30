@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 const navLinks = [
-  { name: "Services", to: "/services" },
-  { name: "Tarifs", to: "/tarifs" },
-  { name: "Témoignages", to: "/temoignages" },
   { name: "À propos", to: "/apropos" },
+  { name: "Services et Tarifs", to: "/services" },
+  { name: "Témoignages", to: "/temoignages" },
+  { name: "Réservez", to: "/tarifs" },
 ];
 
 const Navbar: React.FC = () => {
@@ -15,7 +15,7 @@ const Navbar: React.FC = () => {
   return (
     <nav className="text-white shadow-md fixed w-full z-50 bg-white/50 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-        <Link to="/" className="text-xl font-bold text-blue-700">
+        <Link to="/" className="text-xl font-bold text-blue-700 uppercase">
           PetHome
         </Link>
 

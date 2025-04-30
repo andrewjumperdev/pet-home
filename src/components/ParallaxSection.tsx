@@ -1,47 +1,29 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import React from 'react';
 
-gsap.registerPlugin(ScrollTrigger);
+const ParallaxSection: React.FC = () => (
+  <section className="relative h-[50vh] overflow-hidden">
+    {/* Parallax background */}
+    <div
+      className="absolute inset-0 bg-fixed bg-center bg-cover z-0"
+      style={{
+        backgroundImage: "url('/parallax.jpg')",
+      }}
+    />
 
-const ParallaxSection: React.FC = () => {
-  useEffect(() => {
-    // Fondo que se mueve con scroll (efecto parallax)
-    gsap.to('.parallax-bg', {
-      y: 120,
-      ease: 'none',
-      scrollTrigger: {
-        trigger: '.parallax',
-        start: 'top bottom',
-        end: 'bottom top',
-        scrub: true,
-      },
-    });
+    {/* Dark overlay for contrast */}
+    <div className="absolute inset-0 bg-black/60 z-10" />
 
-    // Texto que aparece suavemente
-    gsap.from('.parallax-text', {
-      opacity: 0,
-      y: 30,
-      duration: 1,
-      ease: 'power2.out',
-      scrollTrigger: {
-        trigger: '.parallax',
-        start: 'top 80%',
-      },
-    });
-  }, []);
-
-  return (
-    <section className="parallax relative py-16 bg-gray-100 overflow-hidden">
-      <div className="parallax-bg absolute inset-0 bg-[url('https://images.unsplash.com/photo-1518719046884-83d9e0d169ac?q=80&w=2070')] bg-cover bg-center z-0"></div>
-      <div className="parallax-text relative z-10 text-center text-white px-4">
-        <h2 className="text-2xl md:text-4xl font-bold mb-4">¡Para Perros y Gatos!</h2>
-        <p className="text-base md:text-xl max-w-lg mx-auto">Juegos y mimos para todos tus amigos peludos.</p>
-      </div>
-    </section>
-  );
-};
-
+    {/* Content container */}
+    <div className="relative z-20 flex flex-col items-center justify-center h-full text-center text-white px-4">
+      <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4">
+        Pour chiens et chats !
+      </h2>
+      <p className="text-base md:text-xl lg:text-2xl max-w-xl mx-auto">
+        Jeux et câlins pour tous vos amis à fourrure.
+      </p>
+    </div>
+  </section>
+);
 export default ParallaxSection;

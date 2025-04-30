@@ -14,9 +14,14 @@ const APropos: React.FC = () => {
   return (
     <section className="bg-white text-gray-800 py-16 px-4 md:px-10 lg:px-20">
       <div className="max-w-5xl mx-auto text-center">
-        <h2 className="text-3xl md:text-5xl font-bold mb-6 text-blue-600">À propos de PetHome</h2>
+        <h2 className="text-3xl md:text-5xl font-bold mb-6 text-blue-600">Qui sommes-nous?</h2>
         <p className="text-lg md:text-xl mb-10 max-w-3xl mx-auto">
-          PetHome est né d’un amour inconditionnel pour les animaux. Nous avons créé un espace chaleureux où chiens et chats se sentent comme à la maison, tout en recevant l’attention et les soins qu’ils méritent.
+        Nous sommes un couple passionné avec de très longues années d’expérience dans la garde et le bien-être des animaux.
+        Mon mari, Andrew, a grandi dans une ferme entouré de 7 chiens, 8 chats, des chevaux, des poules, des oies, etc. et a été assistant vétérinaire pendant son adolescence. Il a un vrai don pour comprendre et éduquer les animaux. Il est très attentionné, doux, joueur.
+        Quant à moi, je m’appelle Justine. J’ai grandi en région parisienne, toujours entourée de chiens et de chats. Je suis très câline, joueuse et attentive à leurs besoins.
+        Mon mari et moi travaillons en télétravail ce qui nous permet d’être disponible 24h/24 et 7j/7 pour les animaux que nous gardons. Par conséquent, nous quittons très peu notre appartamment, seulement pour des occasions nécessaires, comme pour aller au supermarché. 
+        N’hésitez pas à nous contacter si vous avez une question, nous serons ravis de vous répondre! 
+        On a hâte de rencontrer votre petite boule d’amour et de lui faire passer de belles vacances chez nous :D
         </p>
       </div>
 
