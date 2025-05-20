@@ -1,5 +1,6 @@
 import React from "react";
 import { Heart, Eye, Handshake, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const teamPhotos = [
   "/carousel/1.jpg",
@@ -86,8 +87,8 @@ const APropos: React.FC = () => (
       <div className="text-center mb-12">
         <h4 className="text-xl sm:text-2xl font-medium text-gray-700 mb-4">Une question?</h4>
         <div className="flex justify-center gap-4">
-          <a href="/faq" className="bg-blue-200 hover:bg-blue-300 text-blue-800 font-medium py-2 px-6 rounded-full transition">FAQ</a>
-          <a href="/contact" className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-2 px-6 rounded-full transition">Contactez-nous</a>
+          <Link to="/faq" className="bg-blue-200 hover:bg-blue-300 text-blue-800 font-medium py-2 px-6 rounded-full transition">FAQ</Link>
+          <Link to="/contact" className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-2 px-6 rounded-full transition">Contactez-nous</Link>
         </div>
       </div>
 

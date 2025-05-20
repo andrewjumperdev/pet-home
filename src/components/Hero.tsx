@@ -1,5 +1,6 @@
 import React from "react";
 import PawPrintsTrail from "./PawPrintsTrail";
+import { Link } from "react-router-dom";
 
 const Hero: React.FC = () => {
   return (
@@ -32,9 +33,9 @@ const Hero: React.FC = () => {
             Service de garderie <span className="text-red-400 font-extrabold">privé</span> pour chiens et chats<br />
             Aventures, fun et câlins : les vacances rêvées pour votre boule d’amour !
           </p>
-          <a href="/tarifs" className="bg-blue-600 hover:bg-orange-600 text-white px-6 py-2 md:px-8 md:py-3 rounded-full text-base md:text-lg shadow-lg transform hover:scale-110 transition duration-300 drop-shadow-md">
+          <Link to="/tarifs" className="bg-blue-600 hover:bg-orange-600 text-white px-6 py-2 md:px-8 md:py-3 rounded-full text-base md:text-lg shadow-lg transform hover:scale-110 transition duration-300 drop-shadow-md">
             Réservez maintenant
-          </a>
+          </Link>
         </div>
       </section>
     </div>

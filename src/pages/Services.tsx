@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReviewsPage from './Temoignages';
 
 // GIF imports
-import dogSmallGif from '/public/images/dog_small.gif';
-import dogLargeGif from '/public/images/dog_large.gif';
-import catGif from '/public/images/cat.gif';
+import dogSmallGif from '/images/dog_small.gif';
+import dogLargeGif from '/images/dog_large.gif';
+import catGif from '/images/cat.gif';
+import { Link } from 'react-router-dom';
 
 function cn(...classes: (string | undefined | false)[]) {
   return classes.filter(Boolean).join(' ');
@@ -35,9 +36,9 @@ export default function Services() {
   }, []);
 
   return (
-    <section className="bg-gradient-to-br from-green-50 to-white py-12 px-4">
+    <section className="bg-gradient-to-br from-green-50 to-white py-12 px-4 mt-16">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-center text-blue-600 mb-12">SERVICES ET TARIFS</h2>
+        <h2 className="text-3xl md:text-4xl font-extrabold text-center text-blue-500 mb-12">SERVICES ET TARIFS</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((s) => (
             <motion.div key={s.id} whileHover={{ scale: 1.04 }} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition p-6 flex flex-col">
@@ -68,7 +69,7 @@ export default function Services() {
   );
 }
 
-function BookingModal({ service, onClose, overlayRef }: { service: typeof services[0]; onClose: () => void; overlayRef: React.RefObject<HTMLDivElement>; }) {
+function BookingModal({ service, onClose, overlayRef }: { service: typeof services[0]; onClose: () => void; overlayRef: React.RefObject<HTMLDivElement | null>; }) {
   const [quantity, setQuantity] = useState(1);
   const [sizes, setSizes] = useState<string[]>(['Petit & moyen chien']);
   const [details, setDetails] = useState<{ name: string; breed: string; age: string }[]>([
@@ -120,18 +121,18 @@ function BookingModal({ service, onClose, overlayRef }: { service: typeof servic
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
     >
       <motion.div
-        className="bg-white w-full max-w-2xl rounded-2xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white w-full max-w-lg rounded-2xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto"
         initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }}
       >
         <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-200">
           <X className="w-6 h-6 text-gray-700" />
         </button>
-        <h4 className="text-2xl font-bold mb-4 text-blue-600 text-center">
+        <h4 className="text-2xl font-bold mb-4 text-blue-500 text-center">
           Réservation - {service.title}
         </h4>
         <p className="text-sm text-gray-600 mb-6 text-center">
           En poursuivant, vous acceptez nos{' '}
-          <a href="/cgv" className="underline text-blue-600">CGV</a>.
+          <Link to="/cgv" className="underline text-blue-600">CGV</Link>.
         </p>
 
         <div className="flex flex-col-reverse md:flex-row gap-8">
@@ -235,7 +236,7 @@ function BookingModal({ service, onClose, overlayRef }: { service: typeof servic
             </button>
           </form>
 
-          <div className="flex-1 flex justify-center items-center gap-4">
+          <div className="flex-1 flex justify-center items-center gap-4 flex-wrap">
             {sizes.map((sz, i) => (
               <motion.img
                 key={i}

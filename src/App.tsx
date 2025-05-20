@@ -1,16 +1,18 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Routes, Route } from 'react-router-dom';
+
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-
 import Home from './pages/Home';
 import Services from './pages/Services';
-import Temoignages from './pages/Temoignages';
 import APropos from './pages/Apropos';
-import Gallery from './pages/Gallery';
+import GalleryPage from './pages/Gallery';
 import FAQPage from './pages/FAQ';
 import ContactPage from './pages/Contact';
+
+
+
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -42,9 +44,8 @@ const App: React.FC = () => {
             <Route path="/" element={<Home />} />
             <Route path="/services" element={<Services />} />
             <Route path="/tarifs" element={<Services />} />
-            <Route path="/temoignages" element={<Temoignages />} />
             <Route path="/apropos" element={<APropos />} />
-            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/gallery" element={<GalleryPage />} />
             <Route path='/faq' element={<FAQPage />} />
             <Route path="*" element={<Home />} />   
             <Route path='/contact' element={<ContactPage />} />     

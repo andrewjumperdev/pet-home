@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
@@ -17,10 +18,10 @@ const Footer: React.FC = () => {
         <div>
           <h4 className="text-xl font-semibold mb-4">Liens rapides</h4>
           <ul className="space-y-2">
-            <li><a href="/home" className="hover:underline">Accueil</a></li>
-            <li><a href="/services" className="hover:underline">Services</a></li>
-            <li><a href="/tarifs" className="hover:underline">Réservez</a></li>
-            <li><a href="#" className="hover:underline">Contact</a></li>
+            <li><Link to="/home" className="hover:underline">Accueil</Link></li>
+            <li><Link to="/services" className="hover:underline">Services</Link></li>
+            <li><Link to="/tarifs" className="hover:underline">Réservez</Link></li>
+            <li><Link to="/contact" className="hover:underline">Contact</Link></li>
           </ul>
         </div>
 
@@ -39,14 +40,14 @@ const Footer: React.FC = () => {
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 items-center text-sm opacity-90">
           {/* Left Links */}
           <div className="flex justify-center md:justify-start space-x-4 mb-4 md:mb-0">
-            <a href="#" className="hover:underline">En savoir plus</a>
-            <a href="/tarifs" className="hover:underline">Réservez</a>
-            <a href="/contact" className="hover:underline">Nous contacter</a>
-            <a href="/FaQ" className="hover:underline">FAQ</a>
+            <Link to="#" className="hover:underline">En savoir plus</Link>
+            <Link to="/tarifs" className="hover:underline">Réservez</Link>
+            <Link to="/contact" className="hover:underline">Nous contacter</Link>
+            <Link to="/FAQ" className="hover:underline">FAQ</Link>
           </div>
           {/* Center Legal */}
           <div className="text-center mb-4 md:mb-0">
-            <a href="/FAQ" className="hover:underline">Mentions légales</a>
+            <Link to="/FAQ" className="hover:underline">Mentions légales</Link>
           </div>
           {/* Right Copyright */}
           <div className="flex justify-center md:justify-end space-x-2">

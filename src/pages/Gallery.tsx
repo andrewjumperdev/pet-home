@@ -1,30 +1,37 @@
-import Gallery from "../components/Gallerie";
+import React, { Suspense } from 'react';
+import SkeletonGallery from '../components/SkeletonGallery';
 
-const images = [
-    "/carousel/1.jpg",
-    "/carousel/2.jpg",
-    "/carousel/3.jpg",
-    "/carousel/1.jpg",
-    "/carousel/2.jpg",
-    "/carousel/3.jpg",
-    "/carousel/1.jpg",
-    "/carousel/2.jpg",
-    "/carousel/3.jpg",
-    "/carousel/1.jpg",
-    "/carousel/2.jpg",
-    "/carousel/3.jpg",
-    "/carousel/1.jpg",
-    "/carousel/2.jpg",
-    "/carousel/3.jpg",
-    "/carousel/3.jpg",
-  ];
 
-function GalleryPage() {
+const Gallerie = React.lazy(() => import('../components/Gallerie'));
+
+const images: string[] = [
+  '/gallery-pethome/1.jpg',
+  '/gallery-pethome/2.jpg',
+  '/gallery-pethome/3.jpg',
+  '/gallery-pethome/4.jpg',
+  '/gallery-pethome/5.jpg',
+  '/gallery-pethome/6.jpg',
+  '/gallery-pethome/7.jpg',
+  '/gallery-pethome/8.jpg',
+  '/gallery-pethome/9.jpg',
+  '/gallery-pethome/10.jpg',
+  '/gallery-pethome/11.jpg',
+  '/gallery-pethome/13.jpg',
+  '/gallery-pethome/14.jpg',
+  '/gallery-pethome/15.jpg',
+  '/gallery-pethome/12.jpg',
+  '/gallery-pethome/16.jpg',
+];
+
+const GalleryPage: React.FC = () => {
   return (
     <section>
-      <h2>Notre galerie</h2>
-      <Gallery images={images} />
+      <h2 className="text-2xl font-semibold mb-4">Notre galerie</h2>
+      <Suspense fallback={<SkeletonGallery count={16} />}>
+        <Gallerie images={images} />
+      </Suspense>
     </section>
   );
-}
+};
+
 export default GalleryPage;
