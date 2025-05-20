@@ -4,8 +4,8 @@ import { Menu, X } from "lucide-react";
 
 const navLinks = [
   { name: "À propos", to: "/apropos" },
-  { name: "Services et Tarifs", to: "/services" },
-  { name: "Témoignages", to: "/temoignages" },
+  { name: "Services", to: "/services" },
+  { name: "Gallerie", to: "/gallery" },
   { name: "Réservez", to: "/tarifs" },
 ];
 
@@ -15,8 +15,12 @@ const Navbar: React.FC = () => {
   return (
     <nav className="text-white shadow-md fixed w-full z-50 bg-white/50 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-        <Link to="/" className="text-xl font-bold text-blue-700 uppercase">
-          PetHome
+        <Link to="/" className="text-xl font-bold text-blue-700 uppercase flex items-center">
+          <img
+            src="/icon.png"
+            alt="Logo"
+            className="h-8 w-8 mr-2 inline-block"/>
+          <span>PetHome</span>
         </Link>
 
         {/* Hamburger button for mobile */}

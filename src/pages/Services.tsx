@@ -1,223 +1,258 @@
-import React, { useState } from 'react';
-import { Dog, Cat, PawPrint, X } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef, FormEvent } from 'react';
+import { Dog as DogIcon, Cat as CatIcon, PawPrint, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import ReviewsPage from './Temoignages';
 
-// Offres et formules
-const couponInfo = [
-  '10% sur ta 1ʳᵉ réservation',
-  '15% sur ta 5ᵉ réservation',
-  'Offres saisonnières',
-];
+// GIF imports
+import dogSmallGif from '/public/images/dog_small.gif';
+import dogLargeGif from '/public/images/dog_large.gif';
+import catGif from '/public/images/cat.gif';
 
-const couponConditions = [
-  'Valable 3 mois à compter de la 1ʳᵉ réservation',
-  'Un seul coupon utilisable par réservation',
-];
+function cn(...classes: (string | undefined | false)[]) {
+  return classes.filter(Boolean).join(' ');
+}
 
 const services = [
-  {
-    id: 1,
-    title: 'Formule Flash (journée & week-end)',
-    subtitle: 'Parfait pour les escapades courtes',
-    rates: [
-      'Petit et moyens chiens : 25€/jour et par chien',
-      'Gros chiens : 30€/jour et par chien',
-      'Pour deux chiens : remise de 20% sur le prix total',
-    ],
-    guarantee: [
-      '3 longues balades (45–90min, selon l’énergie)',
-      '4 balades pour les grands chiens',
-      'Attention exclusive (1 propriétaire à la fois)',
-      'Jeux, câlins et bien-être',
-      'Photos quotidiennes et communication 7j/7',
-      'Liberté totale dans l’appartement',
-      'Administration de médicaments si besoin',
-    ],
-    icon: <Dog className="h-12 w-12 text-yellow-500" />,  
-  },
-  {
-    id: 2,
-    title: 'Formule Séjours (≥ 3 jours)',
-    subtitle: 'Idéal pour des vacances rêvées',
-    rates: [
-      'Petit et moyens chiens : 20€/jour et par chien',
-      'Gros chiens : 25€/jour et par chien',
-      'Pour deux chiens : remise de 10% sur le prix total',
-    ],
-    guarantee: [
-      '3 longues balades (45–90min, selon l’énergie)',
-      '4 balades pour les grands chiens',
-      'Attention exclusive (1 propriétaire à la fois)',
-      'Jeux, câlins et bien-être',
-      'Photos quotidiennes et communication 7j/7',
-      'Liberté totale dans l’appartement',
-      'Administration de médicaments si besoin',
-    ],
-    icon: <PawPrint className="h-12 w-12 text-pink-500" />,  
-  },
-  {
-    id: 3,
-    title: 'Formule Félin (garderie chats)',
-    subtitle: 'Un vrai paradis pour chat',
-    rates: [
-      '15€/jour et par chat',
-      'Pour deux chats : remise de 10% sur le prix total',
-    ],
-    guarantee: [
-      'Attention exclusive (1 propriétaire à la fois)',
-      'Jeux, câlins et bien-être',
-      'Photos quotidiennes et communication 7j/7',
-      'Liberté totale dans l’appartement',
-      'Administration de médicaments si besoin',
-    ],
-    icon: <Cat className="h-12 w-12 text-purple-500" />,  
-  },
+  { id: 1, title: 'FORMULE FLASH', subtitle: 'Journée & Week-end', description: 'Parfait pour des escapades courtes', rates: ['Petit & moyen chien : 25€/jour', 'Gros chien : 30€/jour', 'Deux chiens : -10%'], icon: <DogIcon className="h-10 w-10 text-yellow-500" />, type: 'dog' },
+  { id: 2, title: 'FORMULE SÉJOURS', subtitle: '3 jours et plus', description: 'Idéal pour des vacances idylliques', rates: ['Petit & moyen chien : 20€/jour', 'Gros chien : 25€/jour', 'Deux chiens : -10%'], icon: <PawPrint className="h-10 w-10 text-pink-500" />, type: 'dog' },
+  { id: 3, title: 'FORMULE FÉLIN', subtitle: 'Garderie chats', description: 'Confort et câlins garantis', rates: ['Chat : 15€/jour', 'Deux chats : -10%'], icon: <CatIcon className="h-10 w-10 text-purple-500" />, type: 'cat' },
 ];
 
-const Services: React.FC = () => {
-  const [modalService, setModalService] = useState<typeof services[0] | null>(null);
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
-  const [petCount, setPetCount] = useState<number>(1);
+const petVariant = {
+  idle: { y: [0, -8, 0], transition: { duration: 1.5, repeat: Infinity } }
+};
 
-  const resetModal = () => {
-    setModalService(null);
-    setStartDate('');
-    setEndDate('');
-    setPetCount(1);
+export default function Services() {
+  const [modal, setModal] = useState<typeof services[0] | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (overlayRef.current && e.target === overlayRef.current) setModal(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <section className="bg-gradient-to-br from-green-50 to-white py-12 px-4">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-3xl md:text-4xl font-extrabold text-center text-blue-600 mb-12">SERVICES ET TARIFS</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {services.map((s) => (
+            <motion.div key={s.id} whileHover={{ scale: 1.04 }} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition p-6 flex flex-col">
+              <div className="flex-1">
+                <div className="flex justify-center mb-4">{s.icon}</div>
+                <h3 className="text-xl font-bold uppercase text-gray-800 text-center mb-2">{s.title}</h3>
+                <p className="text-sm uppercase font-semibold text-gray-500 text-center mb-4">{s.subtitle}</p>
+                <p className="text-base text-gray-600 mb-4 text-center">{s.description}</p>
+                <ul className="list-disc list-inside text-gray-700 space-y-1 text-sm">
+                  {s.rates.map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+              </div>
+              <button onClick={() => setModal(s)} className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-2xl uppercase w-full">Réservez</button>
+            </motion.div>
+          ))}
+        </div>
+
+        <AnimatePresence>
+          {modal && <BookingModal service={modal} onClose={() => setModal(null)} overlayRef={overlayRef} />}
+        </AnimatePresence>
+
+        <div className="mt-16 px-4">
+          <h3 className="text-2xl font-semibold text-center text-gray-800 mb-8">Avis des clients</h3>
+          <ReviewsPage />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BookingModal({ service, onClose, overlayRef }: { service: typeof services[0]; onClose: () => void; overlayRef: React.RefObject<HTMLDivElement>; }) {
+  const [quantity, setQuantity] = useState(1);
+  const [sizes, setSizes] = useState<string[]>(['Petit & moyen chien']);
+  const [details, setDetails] = useState<{ name: string; breed: string; age: string }[]>([
+    { name: '', breed: '', age: '' }
+  ]);
+  const [touched, setTouched] = useState<boolean[]>([false]);
+
+  useEffect(() => {
+    const syncArr = <T,>(arr: T[], defaultVal: T) => {
+      const copy = [...arr];
+      if (quantity > copy.length) copy.push(defaultVal);
+      else copy.splice(quantity);
+      return copy;
+    };
+    setSizes((prev) => syncArr(prev, 'Petit & moyen chien'));
+    setDetails((prev) => syncArr(prev, { name: '', breed: '', age: '' }));
+    setTouched((prev) => syncArr(prev, false));
+  }, [quantity]);
+
+  const handleDetailChange = (idx: number, field: keyof typeof details[0], value: string) => {
+    setDetails((prev) => prev.map((d, i) => (i === idx ? { ...d, [field]: value } : d)));
   };
+  const handleBlur = (idx: number) => setTouched((prev) => prev.map((t, i) => (i === idx ? true : t)));
 
-  const computeDays = () => {
-    if (!startDate || !endDate) return 0;
-    const msPerDay = 1000 * 60 * 60 * 24;
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diff = Math.ceil((end.getTime() - start.getTime()) / msPerDay) + 1;
-    return diff > 0 ? diff : 0;
-  };
+  const errors = details.map((d) => ({
+    name: !d.name.trim(),
+    breed: !d.breed.trim(),
+    age: !(Number(d.age) > 0)
+  }));
+  const hasFieldError = errors.some((e) => e.name || e.breed || e.age);
+  const largeCount = sizes.filter((s) => s === 'Gros chien').length;
+  const isInvalid = largeCount > 1 || hasFieldError;
 
-  const computeTotal = () => {
-    if (!modalService) return 0;
-    const days = computeDays();
-    const base = parseInt(modalService.rates[0].match(/\d+/)?.[0] || '0');
-    let total = days * base * petCount;
-    if (petCount === 2) total *= (1 - (modalService.rates[2] ? parseFloat(modalService.rates[2].match(/\d+/)?.[0] || '0')/100 : 0));
-    return total;
+  const getGif = (size: string) =>
+    service.type === 'cat' ? catGif : size === 'Gros chien' ? dogLargeGif : dogSmallGif;
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (isInvalid) return;
+    // proceed to reservation logic
+    console.log({ service, quantity, sizes, details });
+    onClose();
   };
 
   return (
-    <section className="bg-blue-50 pt-20 pb-20 px-4">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto text-center mb-12">
-        <h2 className="text-4xl md:text-5xl font-extrabold mb-4 text-blue-600">Services et Tarifs</h2>
-        <p className="text-lg md:text-xl text-gray-700">Offres et garderie pour chiens & chats</p>
-      </div>
-
-      {/* Coupons */}
+    <motion.div
+      ref={overlayRef}
+      className="fixed inset-0 bg-white bg-opacity-50 overflow-auto p-4 flex items-center justify-center z-50"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    >
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="bg-white rounded-2xl shadow-lg p-8 mb-16 max-w-4xl mx-auto border-2 border-blue-200"
+        className="bg-white w-full max-w-2xl rounded-2xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto"
+        initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }}
       >
-        <h3 className="text-2xl font-bold mb-4 text-blue-600">Offres</h3>
-        <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
-          {couponInfo.map((c, i) => <li key={i}>{c}</li>)}
-        </ul>
-        <h4 className="font-semibold mb-2 text-blue-500">Conditions d’application</h4>
-        <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-          {couponConditions.map((c, i) => <li key={i}>{c}</li>)}
-        </ul>
-      </motion.div>
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-200">
+          <X className="w-6 h-6 text-gray-700" />
+        </button>
+        <h4 className="text-2xl font-bold mb-4 text-blue-600 text-center">
+          Réservation - {service.title}
+        </h4>
+        <p className="text-sm text-gray-600 mb-6 text-center">
+          En poursuivant, vous acceptez nos{' '}
+          <a href="/cgv" className="underline text-blue-600">CGV</a>.
+        </p>
 
-      {/* Cartes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {services.map(svc => (
-          <motion.div
-            key={svc.id}
-            className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center hover:shadow-2xl transition-shadow duration-300"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-          >
-            <div className="mb-4">{svc.icon}</div>
-            <h3 className="text-2xl font-semibold text-gray-800 mb-1">{svc.title}</h3>
-            <p className="text-gray-500 mb-4">{svc.subtitle}</p>
-            <ul className="text-gray-600 text-sm mb-4 list-disc list-inside space-y-1 w-full">
-              {svc.rates.map((r, i) => <li key={i}>{r}</li>)}
-            </ul>
-            <motion.button
-              onClick={() => setModalService(svc)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
-              whileTap={{ scale: 0.9 }}
-            >
-              Réservez
-            </motion.button>
-          </motion.div>
-        ))}
-      </div>
+        <div className="flex flex-col-reverse md:flex-row gap-8">
+          <form className="flex-1 space-y-6" onSubmit={handleSubmit} noValidate>
+            {service.type === 'dog' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium">Nombre de chiens</label>
+                  <select
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    className="mt-1 w-full border rounded p-2 text-sm"
+                  >
+                    <option value={1}>1</option>
+                    <option value={2}>2</option>
+                  </select>
+                </div>
+                {sizes.map((sz, idx) => (
+                  <div key={idx}>
+                    <label className="block text-sm font-medium">Taille chien {idx + 1}</label>
+                    <select
+                      value={sz}
+                      onChange={(e) => setSizes((prev) => prev.map((s, i) => (i === idx ? e.target.value : s)))}
+                      className="mt-1 w-full border rounded p-2 text-sm"
+                    >
+                      <option>Petit & moyen chien</option>
+                      <option>Gros chien</option>
+                    </select>
+                  </div>
+                ))}
+                {largeCount > 1 && (
+                  <p className="text-red-600 text-sm">Un seul chien de grande taille autorisé.</p>
+                )}
+              </>
+            )}
 
-      {/* Modal */}
-      {modalService && (
-        <div className="fixed inset-0 bg-blue-500 bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative border-4 border-blue-200"
-          >
-            <button onClick={resetModal} className="absolute top-4 right-4"><X className="h-6 w-6 text-blue-500 hover:text-blue-700"/></button>
-            <h3 className="text-2xl font-bold mb-4 text-blue-600">Réservation - {modalService.title}</h3>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="block text-blue-500 mb-2">Début</label>
-                <motion.input
-                  type="date"
-                  value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                  className="w-full p-2 border rounded"
-                  whileFocus={{ scale: 1.02 }}
-                />
+            {details.map((d, idx) => (
+              <div key={idx} className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium">Nom complet</label>
+                  <input
+                    type="text"
+                    value={d.name}
+                    onChange={(e) => handleDetailChange(idx, 'name', e.target.value)}
+                    onBlur={() => handleBlur(idx)}
+                    className={cn(
+                      'mt-1 w-full border rounded p-2 text-sm',
+                      errors[idx].name && touched[idx] && 'border-red-500'
+                    )}
+                  />
+                  {errors[idx].name && touched[idx] && (
+                    <p className="text-red-600 text-xs">Nom requis</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium">Race</label>
+                  <input
+                    type="text"
+                    value={d.breed}
+                    onChange={(e) => handleDetailChange(idx, 'breed', e.target.value)}
+                    onBlur={() => handleBlur(idx)}
+                    className={cn(
+                      'mt-1 w-full border rounded p-2 text-sm',
+                      errors[idx].breed && touched[idx] && 'border-red-500'
+                    )}
+                  />
+                  {errors[idx].breed && touched[idx] && (
+                    <p className="text-red-600 text-xs">Race requise</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium">Âge</label>
+                  <input
+                    type="number"
+                    value={d.age}
+                    onChange={(e) => handleDetailChange(idx, 'age', e.target.value)}
+                    onBlur={() => handleBlur(idx)}
+                    className={cn(
+                      'mt-1 w-full border rounded p-2 text-sm',
+                      errors[idx].age && touched[idx] && 'border-red-500'
+                    )}
+                  />
+                  {errors[idx].age && touched[idx] && (
+                    <p className="text-red-600 text-xs">Âge valide requis</p>
+                  )}
+                </div>
               </div>
-              <div>
-                <label className="block text-blue-500 mb-2">Fin</label>
-                <motion.input
-                  type="date"
-                  value={endDate}
-                  onChange={e => setEndDate(e.target.value)}
-                  className="w-full p-2 border rounded"
-                  whileFocus={{ scale: 1.02 }}
-                />
-              </div>
-            </div>
-            <div className="mb-6">
-              <label className="block text-blue-500 mb-2">Nombre d’animaux (max 2)</label>
-              <motion.input
-                type="number" min={1} max={2}
-                value={petCount}
-                onChange={e => setPetCount(Math.min(2, +e.target.value || 1))}
-                className="w-24 p-2 border rounded"
-                whileFocus={{ scale: 1.1 }}
-              />
-            </div>
-            <div className="text-blue-800 font-semibold mb-4">Total estimé : {computeDays()}j × x{petCount} = {computeTotal().toFixed(2)}€</div>
-            <h4 className="font-semibold mb-2 text-blue-600">Nous vous garantissons :</h4>
-            <ul className="list-disc list-inside text-gray-600 mb-6">
-              {modalService.guarantee.map((g, i) => <li key={i}>{g}</li>)}
-            </ul>
-            <motion.button
-              onClick={() => alert(`Réservation : ${computeTotal().toFixed(2)}€`)}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-full"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.95 }}
+            ))}
+
+            <button
+              type="submit"
+              disabled={isInvalid}
+              className={cn(
+                'w-full py-3 rounded-2xl uppercase text-sm font-semibold',
+                isInvalid
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              )}
             >
               Confirmer
-            </motion.button>
-          </motion.div>
-        </div>
-      )}
-    </section>
-  );
-};
+            </button>
+          </form>
 
-export default Services;
+          <div className="flex-1 flex justify-center items-center gap-4">
+            {sizes.map((sz, i) => (
+              <motion.img
+                key={i}
+                src={getGif(sz)}
+                alt={sz}
+                className={cn(
+                  sz === 'Gros chien' ? 'h-40 w-40' : 'h-28 w-28',
+                  'object-contain'
+                )}
+                variants={petVariant}
+                initial="idle"
+                animate="idle"
+              />
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}

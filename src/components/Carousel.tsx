@@ -1,51 +1,69 @@
 import React, { useRef, useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CarouselProps {
   children: React.ReactNode;
+  autoplayInterval?: number;
 }
 
-const Carousel: React.FC<CarouselProps> = ({ children }) => {
+export const Carousel: React.FC<CarouselProps> = ({ children, autoplayInterval = 4000 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const hoverRef = useRef<boolean>(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const interval = setInterval(() => {
-      if (!container) return;
+    const startAutoPlay = () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(() => {
+        if (hoverRef.current) return;
+        const width = container.clientWidth;
+        const next = container.scrollLeft + width;
+        container.scrollTo({ left: next >= container.scrollWidth ? 0 : next, behavior: "smooth" });
+      }, autoplayInterval);
+    };
 
-      // Scroll automático al siguiente ítem
-      const scrollAmount = container.offsetWidth * 0.8; // depende del width de los ítems
-      if (
-        container.scrollLeft + container.offsetWidth >=
-        container.scrollWidth
-      ) {
-        container.scrollTo({ left: 0, behavior: "smooth" }); // reinicia
-      } else {
-        container.scrollBy({ left: scrollAmount, behavior: "smooth" });
-      }
-    }, 3000); // cada 3 segundos
+    container.addEventListener("mouseenter", () => (hoverRef.current = true));
+    container.addEventListener("mouseleave", () => (hoverRef.current = false));
 
-    return () => clearInterval(interval);
-  }, []);
+    startAutoPlay();
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [autoplayInterval]);
+
+  const scroll = (dir: "left" | "right") => {
+    const container = containerRef.current;
+    if (!container) return;
+    const shift = container.clientWidth;
+    const newPos = dir === "left" ? container.scrollLeft - shift : container.scrollLeft + shift;
+    container.scrollTo({ left: newPos, behavior: "smooth" });
+  };
 
   return (
-    <div className="relative w-full overflow-hidden">
+    <div className="relative w-full overflow-hidden scrollbar-hide scrollbar-none">
       <div
         ref={containerRef}
-        className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide"
+        className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide scrollbar-none px-4 sm:px-0"
       >
-        {React.Children.map(children, (child, index) => (
-          <div
-            key={index}
-            className="snap-start shrink-0 w-[80%] sm:w-[60%] md:w-[40%] lg:w-[30%] xl:w-[25%]"
-          >
+        {React.Children.map(children, (child) => (
+          <div className="snap-start flex-shrink-0 w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 rounded-2xl overflow-hidden">
             {child}
           </div>
         ))}
       </div>
+      <button
+        onClick={() => scroll("left")}
+        className="absolute top-1/2 left-2 -translate-y-1/2 bg-white p-2 rounded-full shadow-md z-10"
+      >
+        <ChevronLeft className="w-6 h-6 text-gray-700" />
+      </button>
+      <button
+        onClick={() => scroll("right")}
+        className="absolute top-1/2 right-2 -translate-y-1/2 bg-white p-2 rounded-full shadow-md z-10"
+      >
+        <ChevronRight className="w-6 h-6 text-gray-700" />
+      </button>
     </div>
   );
 };
-
-export default Carousel;
