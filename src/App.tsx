@@ -11,6 +11,7 @@ import GalleryPage from './pages/Gallery';
 import FAQPage from './pages/FAQ';
 import ContactPage from './pages/Contact';
 import Checkout from './pages/Checkout';
+import NotFound from './pages/NotFound';
 
 
 
@@ -39,7 +40,6 @@ const App: React.FC = () => {
 
       <div className="min-h-screen flex flex-col">
         <Navbar />
-
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -49,11 +49,10 @@ const App: React.FC = () => {
             <Route path="/gallery" element={<GalleryPage />} />
             <Route path='/faq' element={<FAQPage />} />
             <Route path='/checkout' element={<Checkout/>} />
-            <Route path="*" element={<Home />} />   
+            <Route path="*" element={<NotFound />} />   
             <Route path='/contact' element={<ContactPage />} />     
           </Routes>
         </main>
-
         <Footer />
       </div>
     </>
