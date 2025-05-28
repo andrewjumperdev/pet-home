@@ -10,6 +10,7 @@ import APropos from './pages/Apropos';
 import GalleryPage from './pages/Gallery';
 import FAQPage from './pages/FAQ';
 import ContactPage from './pages/Contact';
+import Checkout from './pages/Checkout';
 
 
 
@@ -36,7 +37,7 @@ const App: React.FC = () => {
         <title>PetHome - El Hogar de tus Perros y Gatos</title>
       </Helmet>
 
-      <div className="min-h-screen flex flex-col bg-yellow-50">
+      <div className="min-h-screen flex flex-col">
         <Navbar />
 
         <main className="flex-grow">
@@ -47,6 +48,7 @@ const App: React.FC = () => {
             <Route path="/apropos" element={<APropos />} />
             <Route path="/gallery" element={<GalleryPage />} />
             <Route path='/faq' element={<FAQPage />} />
+            <Route path='/checkout' element={<Checkout/>} />
             <Route path="*" element={<Home />} />   
             <Route path='/contact' element={<ContactPage />} />     
           </Routes>

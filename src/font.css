@@ -1,0 +1,7 @@
+/* src/font.css */
+@font-face {
+  font-family: 'Oregano';
+  src: url('/fonts/Oregano-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}

@@ -1,8 +1,23 @@
 @import "tailwindcss";
+@import './font.css';
+
 
 html {
   scroll-behavior: smooth;
 }
+
+.oregano-regular {
+  font-family: "Oregano", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.oregano-regular-italic {
+  font-family: "Oregano", cursive;
+  font-weight: 400;
+  font-style: italic;
+}
+
 
 @keyframes wiggle {
   0%, 100% { transform: rotate(-3deg); }

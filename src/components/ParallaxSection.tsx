@@ -18,10 +18,10 @@ const ParallaxSection: React.FC = () => (
     {/* Content container */}
     <div className="relative z-20 flex flex-col items-center justify-center h-full text-center text-white px-4">
       <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4">
-        Pour chiens et chats !
+        Retours d'expérience
       </h2>
       <p className="text-base md:text-xl lg:text-2xl max-w-xl mx-auto">
-        Jeux et câlins pour tous vos amis à fourrure.
+        Partez l'esprit tranquille et faites-nous confiance: <br/> votre boule d'amour sera chouchoutée !<br />
       </p>
     </div>
   </section>

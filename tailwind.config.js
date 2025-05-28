@@ -12,7 +12,9 @@ module.exports = {
         'fade-in-up': 'fadeInUp 1s ease-out forwards',
         'float-slow': 'float 4s ease-in-out infinite',
       },
-    
+      fontFamily: {
+        oregano: ['Oregano', 'cursive'],
+      },
     },
   },
   corePlugins: {

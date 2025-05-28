@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-gradient-to-r from-blue-400 to-sky-400 text-white py-8">
+    <footer className="bg-blue-400 text-white py-8">
       {/* Upper Footer */}
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
         {/* Branding & Description */}

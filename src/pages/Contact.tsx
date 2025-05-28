@@ -77,17 +77,6 @@ const ContactPage: React.FC = () => {
               <Mail />
               <p>contact@dogdaycare.fr</p>
             </div>
-            <div className="mt-4">
-              <iframe
-                title="Carte de localisation"
-                src="https://www.google.com/maps/embed?pb=!1m18!..."
-                width="100%"
-                height="250"
-                style={{ border: 0 }}
-                allowFullScreen={false}
-                loading="lazy"
-              ></iframe>
-            </div>
           </CardContent>
         </Card>
 
@@ -160,10 +149,9 @@ const ContactPage: React.FC = () => {
             <span>S'inscrire à notre newsletter & offres exclusives</span>
           </label>
 
-          <button type="submit" className="w-full">
+          <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
             Envoyer la demande
           </button>
-
           {/* <p className="text-sm text-gray-500">
             Nous vous recontacterons sous 24h et vous offrons 10% sur votre première réservation !
           </p> */}
