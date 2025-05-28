@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="refresh" content="0; url=/" />
+    <script>
+      // También para routers que lean el hash
+      window.location.href = window.location.pathname.replace(
+        /^(.*?)\/[^\/]*$/,
+        "$1/"
+      );
+    </script>
+  </head>
+  <body></body>
+</html>
