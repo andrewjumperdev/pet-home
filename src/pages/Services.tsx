@@ -70,7 +70,7 @@ export default function Services() {
         <AnimatePresence>
           {modal && <BookingModal service={modal} onClose={() => setModal(null)} overlayRef={overlayRef} />}
         </AnimatePresence>
-        <div className="mt-16 px-4">
+        <div className="mt-16">
           <h3 className="text-2xl font-semibold text-center text-gray-800 mb-8">Avis des clients</h3>
           <ReviewsPage />
         </div>
