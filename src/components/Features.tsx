@@ -14,7 +14,7 @@ const Features: React.FC = () => {
         {[
           {
             emoji: "🐶🐱",
-            title: "Une garderie de qualité exclusive",
+            title: "Une garderie de haute qualité exclusive",
             desc: "pour les animaux d’un seul propriétaire à la fois",
           },
           {

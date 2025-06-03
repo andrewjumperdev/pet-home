@@ -7,6 +7,7 @@ const navLinks = [
   { name: "Services et tarifs", to: "/tarifs" },
   { name: "Galerie", to: "/gallery" },
   { name: "Réservez", to: "/tarifs" },
+  { name: "Contact", to: "/contact" },
 ];
 
 const Navbar: React.FC = () => {

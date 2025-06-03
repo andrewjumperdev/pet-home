@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ReviewCard from "../components/ReviewCard";
+import ReviewCard from "./ReviewCard";
 
 
 type Review = {

@@ -10,7 +10,7 @@ const faqs = [
   {
     id: 2,
     question: '📍 Où se trouve la garderie ?',    
-    answer: 'La garderie se trouve dans notre appartement de 60 m² à Antony (Île-de-France), en face du parc Heller et de la coulée verte qui s’étend sur de nombreux kilomètres jusqu’à Paris.'
+    answer: 'La garderie se trouve dans notre appartement de 60 m² à Antony (Île-de-France), en face d\'un parc et de la coulée verte qui s’étend sur de nombreux kilomètres jusqu’à Paris.'
   },
   {
     id: 3,

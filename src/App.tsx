@@ -12,6 +12,8 @@ import FAQPage from './pages/FAQ';
 import ContactPage from './pages/Contact';
 import Checkout from './pages/Checkout';
 import NotFound from './pages/NotFound';
+import AdminPage from './pages/Admin';
+import LoginPage from './pages/LoginPage';
 
 
 
@@ -49,6 +51,8 @@ const App: React.FC = () => {
             <Route path="/gallery" element={<GalleryPage />} />
             <Route path='/faq' element={<FAQPage />} />
             <Route path='/checkout' element={<Checkout/>} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="*" element={<NotFound />} />   
             <Route path='/contact' element={<ContactPage />} />     
           </Routes>

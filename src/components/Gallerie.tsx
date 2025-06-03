@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
+import ImageWithLoader from './ImageWithLoader';
 
 interface GalleryProps {
   images: string[];
@@ -17,14 +18,13 @@ const Gallery: React.FC<GalleryProps> = ({ images }) => {
 
   return (
     <>
-      <div className="columns-1 mt-12 sm:columns-2 md:mt-12 md:columns-3 lg:mt-8 lg:columns-4 gap-4 space-y-4 p-4">
+      <div className="columns-1 mt-12 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 p-4">
         {images.map((src, i) => (
           <div key={i} className="break-inside-avoid">
-            <img
+            <ImageWithLoader
               src={src}
               alt={`Gallery image ${i + 1}`}
-              className="w-full mb-4 rounded-lg object-cover cursor-pointer"
-              loading="lazy"
+              className="mb-4"
               onClick={() => handleClick(i)}
             />
           </div>

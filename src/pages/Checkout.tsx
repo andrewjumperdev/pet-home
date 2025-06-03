@@ -70,7 +70,7 @@ export default function Checkout() {
             purchase_units: [
             {
                 amount: {
-                    currency_code: "EUR",
+                  currency_code: "EUR",
                   value: total.toFixed(2),
                 },
             },
@@ -80,28 +80,53 @@ export default function Checkout() {
 
 
 
-        const onApprove = async (_: any, actions: OnApproveActions) => {
-        if (!actions.order) {
-            throw new Error("actions.order is undefined");
-        }
-        const order = await actions.order.capture();
-        // Aquí puedes guardar tu lógica extra:
-        let curr = new Date(start);
-        while (curr <= end) {
-            await addDoc(collection(db, "bookings"), {
-            serviceId: service.id,
-            date: curr.toISOString().split("T")[0],
-            quantity,
-            sizes,
-            details,
-            contact,
-            paymentId: order.id,
-            createdAt: new Date().toISOString(),
-            });
-            curr.setDate(curr.getDate() + 1);
-        }
-        navigate("/confirmation", { state: { order } });
-        };
+const onApprove = async (_: any, actions: OnApproveActions) => {
+  const order = await actions.order!.capture();
+  console.log("✅ Pago aprobado:", order);
+
+  // grabar cada día…
+  let curr = new Date(start);
+  while (curr <= end) {
+    try {
+      const docRef = await addDoc(collection(db, "bookings"), {
+        serviceId: service.id,
+        date: curr.toISOString().split("T")[0],
+        quantity,
+        sizes,
+        details,
+        contact,
+        paymentId: order.id,
+        createdAt: new Date().toISOString(),
+      });
+      console.log("  📄 Documento creado:", docRef.id);
+    } catch (e) {
+      console.error("❌ Error al guardar booking:", e);
+    }
+    curr.setDate(curr.getDate() + 1);
+  }
+
+  navigate("/success", {
+    state: {
+      order,
+      contact,
+      serviceId: service.id,
+      dates: [start, end],
+      bookingCount: days,
+    },
+  });
+};
+
+
+const handleError = (err: any) => {
+  console.error("Erreur PayPal:", err);
+  navigate("/error", { state: { error: err.toString() } });
+};
+
+const handleCancel = (data: any) => {
+  console.log("Paiement annulé:", data);
+  navigate("/error", { state: { cancelled: true } });
+};
+
 
     useEffect(() => window.scrollTo(0, 0), []);
 
@@ -253,25 +278,24 @@ export default function Checkout() {
                             options={{
                                     clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
                                     currency: "EUR",
+                                    locale: "fr_FR",
+                                    components: "buttons",
                             }}
                         >
                             <div className="w-full flex justify-center">
-                                <div className="w-full sm:w-80">
+                                <div className="w-full max-w-md z-10">
                                     <PayPalButtons
                                     style={{
                                         layout: "horizontal",
                                         shape: "rect",
-                                        color: "black",  // Cambiar a black o white
+                                        color: "black",
                                         label: "pay",
                                     }}
                                     fundingSource={window?.paypal?.FUNDING?.CARD}
-
                                     createOrder={createOrder}
                                     onApprove={onApprove}
-                                    onError={(err) => {
-                                        console.error("Erreur Carte Bancaire:", err);
-                                        alert("Une erreur est survenue lors du paiement par carte.");
-                                    }}
+                                    onError={handleError}
+                                    onCancel={handleCancel}
                                     forceReRender={[total]}
                                     />
 

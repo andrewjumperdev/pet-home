@@ -1,6 +1,7 @@
 import React from "react";
 import PawPrintsTrail from "./PawPrintsTrail";
 import { Link } from "react-router-dom";
+import CustomButton from "./CustomButton";
 
 const Hero: React.FC = () => {
   return (
@@ -31,11 +32,14 @@ const Hero: React.FC = () => {
           </h1>
           <p className="text-lg md:text-2xl mb-6 max-w-md mx-auto drop-shadow-md pb-5">
             Service de garderie <span className="text-blue-500 font-extrabold">privé</span><br /> pour chiens et chats<br /><br />
-            Aventures, fun et câlins : les vacances rêvées pour votre boule d’amour !
+            Aventures, Câlins et Repos : les vacances rêvées pour votre boule d’amour !
           </p>
-          <Link to="/tarifs" className="bg-blue-400 hover:bg-blue-800 text-white px-6 py-2 md:px-8 md:py-3 rounded-full text-base md:text-lg shadow-lg transform hover:scale-110 transition duration-300 drop-shadow-md uppercase font-semibold">
-            Réservez
-          </Link>
+            <CustomButton
+              label="Réservez"
+              alt="Aller à la page de réservation"
+              variant="primary"
+              to="/tarifs"
+            />
         </div>
       </section>
     </div>

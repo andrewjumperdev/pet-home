@@ -3,57 +3,54 @@ import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-blue-400 text-white py-8">
+    <footer className="bg-blue-400 text-white text-sm">
       {/* Upper Footer */}
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-        {/* Branding & Description */}
-        <div>
-          <h3 className="text-2xl font-bold mb-4">PetHome</h3>
-          <p className="text-sm md:text-base">
-            Votre refuge pour chiens et chats, où chaque jour est une nouvelle aventure pleine de câlins et de sourires.
-          </p>
-        </div>
-
-        {/* Quick Links */}
-        <div>
-          <h4 className="text-xl font-semibold mb-4">Liens rapides</h4>
-          <ul className="space-y-2">
-            <li><Link to="/home" className="hover:underline">Accueil</Link></li>
-            <li><Link to="/services" className="hover:underline">Services</Link></li>
+      <div className="container mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        {/* Column 1: Navigation */}
+        <div className="text-center sm:text-left space-y-2">
+          <ul className="space-y-1">
+            <li><Link to="/apropos" className="hover:underline">En savoir plus</Link></li>
             <li><Link to="/tarifs" className="hover:underline">Réservez</Link></li>
-            <li><Link to="/contact" className="hover:underline">Contact</Link></li>
+            <li><Link to="/contact" className="hover:underline">Nous contacter</Link></li>
+            <li><Link to="/FAQ" className="hover:underline">FAQ</Link></li>
           </ul>
         </div>
 
-        {/* Contact & Social */}
-        <div>
-          <h4 className="text-xl font-semibold mb-4">Contactez-nous</h4>
-          <p className="text-sm md:text-base mb-4">
-            France, Paris<br />
-            contact@pethome.com
+        {/* Column 2: Contact & Social */}
+        <div className="text-center sm:text-left space-y-2">
+          <p><i className="fa-solid fa-location-dot mr-2"></i>Antony, Île-de-France</p>
+          <Link
+            to="https://www.instagram.com/maisonpourpets"
+            className="inline-flex items-center gap-2 hover:text-blue-200 transition-colors"
+            target='_blank'
+            rel="noopener noreferrer"
+          >
+            <i className="fa-brands fa-instagram text-xl"></i>
+            <span>@maisonpourpets</span>
+          </Link>
+        </div>
+
+        {/* Column 3: Logo & Description */}
+        <div className="text-center sm:text-left space-y-2">
+          <div className="flex justify-center sm:justify-start items-center gap-3">
+            <img src="/icon.png" alt="Logo" className="h-10 w-10" />
+            <span className="font-oregano oregano-regular-italic text-xl">PetHome</span>
+          </div>
+          <p className="max-w-xs mx-auto sm:mx-0">
+            Votre refuge pour chiens et chats, où chaque jour est une nouvelle aventure pleine de câlins et de sourires.
           </p>
         </div>
       </div>
 
       {/* Bottom Bar */}
-      <div className="mt-12 border-t border-white/30 pt-6">
-        <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 items-center text-sm opacity-90">
-          {/* Left Links */}
-          <div className="flex justify-center md:justify-start space-x-4 mb-4 md:mb-0">
-            <Link to="#" className="hover:underline">En savoir plus</Link>
-            <Link to="/tarifs" className="hover:underline">Réservez</Link>
-            <Link to="/contact" className="hover:underline">Nous contacter</Link>
-            <Link to="/FAQ" className="hover:underline">FAQ</Link>
-          </div>
-          {/* Center Legal */}
-          <div className="text-center mb-4 md:mb-0">
-            <Link to="/FAQ" className="hover:underline">Mentions légales</Link>
-          </div>
-          {/* Right Copyright */}
-          <div className="flex justify-center md:justify-end space-x-2">
-            <span>HomePet</span>
-            <span>© {new Date().getFullYear()} Jumper Enterprise. Tous droits réservés</span>
-          </div>
+      <div className="border-t border-white/30 mt-8 py-4">
+        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2 text-center md:text-left">
+          <Link to="/FAQ" className="hover:underline">
+            Mentions légales
+          </Link>
+          <p className="opacity-90">
+            © {new Date().getFullYear()} Jumper Enterprise. Tous droits réservés.
+          </p>
         </div>
       </div>
     </footer>
