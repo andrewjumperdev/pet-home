@@ -1,6 +1,5 @@
 import React from "react";
 import PawPrintsTrail from "./PawPrintsTrail";
-import { Link } from "react-router-dom";
 import CustomButton from "./CustomButton";
 
 const Hero: React.FC = () => {

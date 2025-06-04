@@ -1,6 +1,7 @@
+// src/App.tsx
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -14,11 +15,12 @@ import Checkout from './pages/Checkout';
 import NotFound from './pages/NotFound';
 import AdminPage from './pages/Admin';
 import LoginPage from './pages/LoginPage';
-
-
-
+import AdminRegister from './pages/AdminRegister';
 
 const App: React.FC = () => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   useEffect(() => {
     document.body.style.scrollBehavior = 'smooth';
   }, []);
@@ -41,7 +43,7 @@ const App: React.FC = () => {
       </Helmet>
 
       <div className="min-h-screen flex flex-col">
-        <Navbar />
+        {!isAdminRoute && <Navbar />}
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -49,15 +51,16 @@ const App: React.FC = () => {
             <Route path="/tarifs" element={<Services />} />
             <Route path="/apropos" element={<APropos />} />
             <Route path="/gallery" element={<GalleryPage />} />
-            <Route path='/faq' element={<FAQPage />} />
-            <Route path='/checkout' element={<Checkout/>} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/admin" element={<AdminPage />} />
-            <Route path="*" element={<NotFound />} />   
-            <Route path='/contact' element={<ContactPage />} />     
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/admin-register" element={<AdminRegister />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
-        <Footer />
+        {!isAdminRoute && <Footer />}
       </div>
     </>
   );

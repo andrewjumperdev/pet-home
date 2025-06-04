@@ -5,8 +5,8 @@ import ReviewsPage from "../components/Temoignages";
 import { useNavigate } from "react-router-dom";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { db } from "../lib/firebase"; // Import db from firebase module
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 import dogSmallGif from "/images/dog_small.gif";
 import dogLargeGif from "/images/dog_large.gif";
@@ -42,7 +42,7 @@ export const services: Service[] = [
     subtitle: "2 nuits et plus",
     description: "Idéal pour des vacances",
     rates: [
-      "22€/jour (Chien jusqu'à 40kg)",
+      "22€/Nuit (Chien jusqu'à 40kg)",
       "Deux chiens : -10%",
     ],
     icon: <PawPrint className="h-10 w-10 text-pink-500" />,

@@ -1,7 +1,7 @@
 // src/pages/ContactPage.tsx
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Phone, Mail } from 'lucide-react';
+import { MapPin, Mail } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
 import { Input } from '../components/Input';
 import { Textarea } from '../components/Textarea';
@@ -26,7 +26,6 @@ const services = [
   'Garderie Journalière',
   'Pension de Nuit',
   'Promenade Individuelle',
-  'Toilettage',
 ];
 
 const fieldAnim = {
@@ -111,11 +110,11 @@ const ContactPage: React.FC = () => {
           <CardContent className="space-y-4">
             <div className="flex items-start space-x-2">
               <MapPin />
-              <p>Paris, France</p>
+              <p>Antony, Île-de-France</p>
             </div>
             <div className="flex items-center space-x-2">
               <Mail />
-              <p>contact@dogdaycare.fr</p>
+              <p>maisonpourpets@hotmail.com</p>
             </div>
           </CardContent>
         </Card>
