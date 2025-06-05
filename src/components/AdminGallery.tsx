@@ -17,7 +17,7 @@ type ImageData = {
 
 export default function AdminGallery() {
   const [file, setFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  // const [uploadProgress, setUploadProgress] = useState(0);
   const [images, setImages] = useState<ImageData[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -53,7 +53,7 @@ export default function AdminGallery() {
     } catch (err) {
       console.error("Error uploading to ImgBB:", err);
     } finally {
-      setUploadProgress(0);
+      // setUploadProgress(0);
       setIsUploading(false);
     }
   };

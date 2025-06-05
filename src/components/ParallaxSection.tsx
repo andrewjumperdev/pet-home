@@ -17,7 +17,7 @@ const ParallaxSection: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("https://pethome-backend.onrender.com/reviews")
+    fetch("https://api.maisonpourpets.com/reviews")
       .then((res) => res.json())
       .then((data: Review[]) => {
         setReviews(data);
