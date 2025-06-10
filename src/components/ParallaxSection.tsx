@@ -10,6 +10,7 @@ type Review = {
   date: string;
   text: string;
   sourceUrl: string;
+  starRating: number;
 };
 
 const ParallaxSection: React.FC = () => {
@@ -26,7 +27,7 @@ const ParallaxSection: React.FC = () => {
   }, []);
 
   return (
-    <section className="relative h-[72vh] overflow-hidden">
+    <section className="relative overflow-hidden py-8">
       <div
         className="absolute inset-0 bg-fixed bg-center bg-cover z-0"
         style={{
@@ -52,19 +53,27 @@ const ParallaxSection: React.FC = () => {
             <p>Aucun avis trouvé.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {reviews.map((review) => (
+              {reviews.slice(0, 3).map((review) => (
                 <ReviewCard key={review._id} review={review} />
               ))}
             </div>
           )}
         </div>
-
-        <CustomButton
-          label="Contactez-nous"
-          alt="Aller à la page de contact"
-          variant="primary"
-          to="/contact"
-        />
+        <div className="flex sm:flex-col md:flex-row gap-4">
+          {" "}
+          <CustomButton
+            label="Contactez-nous"
+            alt="Aller à la page de contact"
+            variant="primary"
+            to="/contact"
+          />
+          <CustomButton
+            label="Laissez un commentaire"
+            alt="Aller à la page de Avis"
+            variant="primary"
+            to="/tarifs"
+          />
+        </div>
       </div>
     </section>
   );

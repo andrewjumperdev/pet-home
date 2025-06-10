@@ -12,6 +12,8 @@ import dogSmallGif from "/images/dog_small.gif";
 import dogLargeGif from "/images/dog_large.gif";
 import catGif from "/images/cat.gif";
 import CustomButton from "../components/CustomButton";
+import { Helmet } from "react-helmet";
+import ReviewForm from "../components/ReviewForm";
 
 type Service = {
   id: number;
@@ -29,10 +31,7 @@ export const services: Service[] = [
     title: "FORMULE FLASH",
     subtitle: "Journée",
     description: "Parfait pour des escapades courtes",
-    rates: [
-      "20€/jour (Chien jusqu'à 40kg)",
-      "Deux chiens : -10%",
-    ],
+    rates: ["20€/jour (Chien jusqu'à 40kg)", "Deux chiens : -10%"],
     icon: <DogIcon className="h-10 w-10 text-yellow-500" />,
     type: "dog",
   },
@@ -41,10 +40,7 @@ export const services: Service[] = [
     title: "FORMULE SÉJOURS",
     subtitle: "2 nuits et plus",
     description: "Idéal pour des vacances",
-    rates: [
-      "22€/Nuit (Chien jusqu'à 40kg)",
-      "Deux chiens : -10%",
-    ],
+    rates: ["22€/Nuit (Chien jusqu'à 40kg)", "Deux chiens : -10%"],
     icon: <PawPrint className="h-10 w-10 text-pink-500" />,
     type: "dog",
   },
@@ -72,6 +68,19 @@ export default function Services() {
 
   return (
     <section className="bg-gradient-to-br from-green-50 to-white py-12 px-4 mt-16">
+      <Helmet>
+        <title>Nos services - PetHome</title>
+        <meta
+          name="description"
+          content="Découvrez nos services de garde d'animaux, nos tarifs et notre engagement envers le bien-être de vos compagnons."
+        />
+        <meta property="og:title" content="Nos services - PetHome" />
+        <meta
+          property="og:description"
+          content="Découvrez nos services de garde d'animaux, nos tarifs et notre engagement envers le bien-être de vos compagnons."
+        />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-extrabold text-center text-blue-500 mb-12">
           SERVICES ET TARIFS
@@ -128,6 +137,9 @@ export default function Services() {
             Avis des clients
           </h3>
           <ReviewsPage />
+          <div className="mt-12" id="avis">
+            <ReviewForm />
+          </div>
         </div>
       </div>
     </section>

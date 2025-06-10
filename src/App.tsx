@@ -16,6 +16,7 @@ import NotFound from './pages/NotFound';
 import AdminPage from './pages/Admin';
 import LoginPage from './pages/LoginPage';
 import AdminRegister from './pages/AdminRegister';
+import { ScrollToTop } from './components/ScrollToTop';
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -45,6 +46,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex flex-col">
         {!isAdminRoute && <Navbar />}
         <main className="flex-grow">
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/services" element={<Services />} />

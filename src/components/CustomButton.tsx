@@ -7,7 +7,9 @@ type ButtonProps = {
   variant?: "primary" | "secondary";
   onClick?: () => void;
   to?: string;
+  type?: "button" | "submit" | "reset";    // <= nuevo
 };
+
 
 const CustomButton: React.FC<ButtonProps> = ({
   label,
@@ -15,6 +17,7 @@ const CustomButton: React.FC<ButtonProps> = ({
   variant = "primary",
   onClick,
   to,
+  type = "button",  // <= nuevo
 }) => {
   const baseStyle =
     "w-full md:w-auto px-6 py-2 md:px-8 md:py-3 rounded-full text-base md:text-lg shadow-lg transform transition duration-300 drop-shadow-md uppercase font-semibold text-center";
@@ -35,7 +38,7 @@ const CustomButton: React.FC<ButtonProps> = ({
   }
 
   return (
-    <button onClick={onClick} className={className} aria-label={alt}>
+    <button onClick={onClick} className={className} aria-label={alt} type={type ?? "button"}>
       {label}
     </button>
   );
