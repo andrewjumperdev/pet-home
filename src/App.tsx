@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Routes, Route, useLocation } from 'react-router-dom';
@@ -17,6 +16,7 @@ import AdminPage from './pages/Admin';
 import LoginPage from './pages/LoginPage';
 import AdminRegister from './pages/AdminRegister';
 import { ScrollToTop } from './components/ScrollToTop';
+import Success from './pages/Success';
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -59,6 +59,7 @@ const App: React.FC = () => {
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/admin-register" element={<AdminRegister />} />
+            <Route path="/success" element={ <Success/> } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
