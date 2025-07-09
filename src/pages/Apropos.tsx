@@ -77,12 +77,15 @@ const APropos: React.FC = () => {
       >
         {/* Header */}
         <header className="text-center mb-12">
-          <h1
-            id="about-heading"
-            className="text-4xl font-extrabold text-blue-600"
-          >
+          <h1 id="about-heading" className="text-4xl font-extrabold text-black">
             Qui sommes-nous ?
           </h1>
+          <p className="mt-4 text-lg text-gray-700 text-start">
+            PetHome n’est pas une pension ni un refuge où sa mascotte partagera
+            son lieu de vie avec des dizaines d’autres chiens/chats. PetHome est
+            une vraie maison d’accueil où votre mascotte se sent en vacances
+            avec sa seconde famille.
+          </p>
         </header>
 
         {/* Team Photos & Text */}
@@ -91,16 +94,18 @@ const APropos: React.FC = () => {
           <div className="order-1 md:order-1 space-y-4 text-gray-800 leading-relaxed">
             <p>
               Nous sommes un couple passionné avec de très longues années
-              d’expérience dans la garde et le bien-être des animaux. <br /> Mon mari,
-              Andrew, a grandi dans une ferme au Costa Rica entouré de 7 chiens,
-              8 chats, des chevaux, des vaches, des poules… et a été assistant
-              vétérinaire pendant son adolescence. Il a un vrai don pour
-              comprendre et éduquer les animaux mais est aussi attentionné, doux
-              et joueur.<br /> <br />Quant à moi, je m’appelle Justine. J’ai grandi en
-              région parisienne, toujours entourée de chiens et de chats. Je
-              suis très câline, joueuse et attentive à leurs besoins. <br /> <br />Nous
-              travaillons en télétravail ce qui nous permet d’être disponibles
-              24h/24 et 7j/7 pour les animaux que nous gardons.
+              d’expérience dans la garde et le bien-être des animaux. <br /> Mon
+              mari, Andrew, a grandi dans une ferme au Costa Rica entouré de 7
+              chiens, 8 chats, des chevaux, des vaches, des poules… et a été
+              assistant vétérinaire pendant son adolescence. Il a un vrai don
+              pour comprendre et éduquer les animaux mais est aussi attentionné,
+              doux et joueur.
+              <br /> <br />
+              Quant à moi, je m’appelle Justine. J’ai grandi en région
+              parisienne, toujours entourée de chiens et de chats. Je suis très
+              câline, joueuse et attentive à leurs besoins. <br /> <br />
+              Nous travaillons en télétravail ce qui nous permet d’être
+              disponibles 24h/24 et 7j/7 pour les animaux que nous gardons.
             </p>
             <p>
               Nous habitons dans un appartement de 60m² à Antony,
@@ -112,10 +117,11 @@ const APropos: React.FC = () => {
             <p>
               Nous accueillons jusqu'à deux chiens/chats d'un SEUL propriétaire
               à la fois pour offrir toute notre attention et assurer un séjour
-              exclusif de haute qualité. <br /> <br />N’hésitez pas à nous contacter si vous
-              avez une question, nous serons ravis de vous répondre! On a hâte
-              de rencontrer votre petite boule d’amour et de lui faire passer de
-              merveilleuses vacances chez nous :)
+              exclusif de haute qualité. <br /> <br />
+              N’hésitez pas à nous contacter si vous avez une question, nous
+              serons ravis de vous répondre! On a hâte de rencontrer votre
+              petite boule d’amour et de lui faire passer de merveilleuses
+              vacances chez nous :)
             </p>
           </div>
 
@@ -134,7 +140,12 @@ const APropos: React.FC = () => {
             <LazyImage
               src="/carousel/3.jpg"
               alt="Photo équipe 3"
-              className="col-span-2 w-full h-64 object-cover rounded-xl"
+              className="w-full h-48 md:h-64 object-cover rounded-xl"
+            />
+            <LazyImage
+              src="/carousel/4.jpg"
+              alt="Photo équipe 4"
+              className="w-full h-48 md:h-64 object-cover rounded-xl"
             />
           </div>
         </section>
@@ -167,21 +178,23 @@ const APropos: React.FC = () => {
 
         {/* CTA Section */}
         <section className="text-center mb-12">
-          <h3 className="text-2xl font-medium text-gray-800 mb-4">
+          <h3 className="text-2xl font-medium text-gray-800 mb-8">
             Une question ?
           </h3>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-6">
             <CustomButton
               label="FAQ"
               alt="Aller à la page FAQ"
               variant="primary"
               to="/FAQ"
+              className="text-sm px-4 py-2"
             />
             <CustomButton
               label="Contactez-nous"
               alt="Aller à la page de contact"
               variant="primary"
               to="/contact"
+              className="text-sm px-4 py-2"
             />
           </div>
         </section>

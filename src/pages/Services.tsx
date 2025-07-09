@@ -14,6 +14,7 @@ import catGif from "/images/cat.gif";
 import CustomButton from "../components/CustomButton";
 import { Helmet } from "react-helmet";
 import ReviewForm from "../components/ReviewForm";
+import AnimatedOfferBanner from "../components/AnimatedOfferBanner";
 
 type Service = {
   id: number;
@@ -26,21 +27,21 @@ type Service = {
 };
 
 export const services: Service[] = [
-  {
+ {
     id: 1,
     title: "FORMULE FLASH",
     subtitle: "Journée",
     description: "Parfait pour des escapades courtes",
-    rates: ["20€/jour (Chien jusqu'à 40kg)", "Deux chiens : -10%"],
+    rates: ["19€/jour (jusqu’à 40kg max)", "2 chiens: -10% sur le 2ème chien"],
     icon: <DogIcon className="h-10 w-10 text-yellow-500" />,
     type: "dog",
   },
   {
     id: 2,
-    title: "FORMULE SÉJOURS",
-    subtitle: "2 nuits et plus",
-    description: "Idéal pour des vacances",
-    rates: ["22€/Nuit (Chien jusqu'à 40kg)", "Deux chiens : -10%"],
+    title: "FORMULE SÉJOUR",
+    subtitle: "1 nuit et plus",
+    description: "Idéal pour les vacances",
+    rates: ["23€/nuit (jusqu’à 40kg max)", "2 chiens: -15% sur le 2ème chien"],
     icon: <PawPrint className="h-10 w-10 text-pink-500" />,
     type: "dog",
   },
@@ -49,7 +50,7 @@ export const services: Service[] = [
     title: "FORMULE FÉLIN",
     subtitle: "Journée ou nuit",
     description: "Confort et câlins garantis",
-    rates: ["15€/jour (1 chat)", "Deux chats : -10%"],
+    rates: ["19€/nuit", "2 chats: -10% sur le 2ème chat"],
     icon: <CatIcon className="h-10 w-10 text-purple-500" />,
     type: "cat",
   },
@@ -85,6 +86,7 @@ export default function Services() {
         <h2 className="text-3xl md:text-4xl font-extrabold text-center text-blue-500 mb-12">
           SERVICES ET TARIFS
         </h2>
+            <AnimatedOfferBanner />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service) => (
             <motion.article
@@ -134,7 +136,7 @@ export default function Services() {
         </AnimatePresence>
         <div className="mt-16">
           <h3 className="text-2xl font-semibold text-center text-gray-800 mb-8">
-            Avis des clients
+            Ils nous ont fait confiance
           </h3>
           <ReviewsPage />
           <div className="mt-12" id="avis">
