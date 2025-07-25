@@ -25,7 +25,10 @@ export default function BookingsPanel() {
     async function fetchBookings() {
       try {
         const snapshot = await getDocs(collection(db, 'bookings'));
-        const data = snapshot.docs.map(d => ({ id: d.id, ...(d.data() as Booking) }));
+        const data = snapshot.docs.map(d => {
+        const booking = d.data() as Booking;
+        return { ...booking, id: d.id };
+        });
         setBookings(data);
       } catch (err) {
         console.error(err);

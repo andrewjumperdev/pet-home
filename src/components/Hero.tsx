@@ -31,7 +31,7 @@ const Hero: React.FC = () => {
           </h1>
           <p className="text-lg md:text-2xl mb-6 max-w-md mx-auto drop-shadow-md pb-5">
             Service de garderie <span className="text-blue-500 font-extrabold">privé</span><br /> pour chiens et chats<br /><br />
-            Aventures, Câlins et Repos : les vacances rêvées pour votre boule d’amour !
+            Aventures, câlins et repos : les vacances rêvées pour votre boule d’amour !
           </p>
             <CustomButton
               label="Réservez"

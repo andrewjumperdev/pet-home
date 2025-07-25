@@ -1,13 +1,15 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import ReviewCard, { Review } from "./ReviewCard";
 import { db } from "../lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import { ChevronDown, ChevronUp } from "lucide-react"; // puedes usar íconos de Lucide o cualquier otro
+import { ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export default function ReviewsPage() {
+export default function ReviewsDropDown() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAll, setShowAll] = useState(false); // 👈 Nuevo estado
 
   useEffect(() => {
     async function loadAllReviews() {
@@ -19,10 +21,10 @@ export default function ReviewsPage() {
         if (res.ok) {
           backendReviews = await res.json();
         } else {
-          console.warn("API externa respondió con error:", res.status);
+          console.warn("API externa respondió avec erreur:", res.status);
         }
       } catch (error) {
-        console.error("Error cargando reviews API externa:", error);
+        console.error("Erreur lors du chargement des avis (API):", error);
       }
 
       let firestoreReviews: Review[] = [];
@@ -44,7 +46,7 @@ export default function ReviewsPage() {
           };
         });
       } catch (error) {
-        console.error("Error cargando reviews de Firestore:", error);
+        console.error("Erreur lors du chargement des avis (Firestore):", error);
       }
 
       const combined = [...backendReviews, ...firestoreReviews].sort(
@@ -61,12 +63,10 @@ export default function ReviewsPage() {
   if (loading) return <p>Chargement...</p>;
   if (reviews.length === 0) return <p>Aucun avis trouvé.</p>;
 
-  const reviewsToShow = showAll ? reviews : reviews.slice(0, 3); // 👈 mostrar 3 o todos
-
   return (
     <div className="mt-10">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {reviewsToShow.map((review, idx) => (
+        {reviews.slice(0, 3).map((review, idx) => (
           <ReviewCard
             key={review._id ?? review.date ?? idx}
             review={review}
@@ -74,25 +74,15 @@ export default function ReviewsPage() {
         ))}
       </div>
 
-      {/* Botón para ver más o menos */}
-      {reviews.length > 3 && (
-        <div className="flex justify-center mt-6">
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className="flex items-center text-blue-600 hover:underline"
-          >
-            {showAll ? (
-              <>
-                Voir moins <ChevronUp className="ml-2 h-4 w-4" />
-              </>
-            ) : (
-              <>
-                Voir plus <ChevronDown className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </button>
-        </div>
-      )}
+      <div className="flex justify-center mt-6">
+        <Link
+          to="/avis"
+          className="flex items-center text-blue-600 font-medium hover:underline transition"
+        >
+          Voir plus d'avis
+          <ChevronRight className="ml-2 h-4 w-4" />
+        </Link>
+      </div>
     </div>
   );
 }

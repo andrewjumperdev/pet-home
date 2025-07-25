@@ -6,7 +6,7 @@ const navLinks = [
   { name: "À propos", to: "/apropos" },
   { name: "Services et tarifs", to: "/tarifs" },
   { name: "Galerie", to: "/gallery" },
-  { name: "Réservez", to: "/tarifs" },
+  { name: "Avis", to: "/avis" },
   { name: "Contact", to: "/contact" },
 ];
 

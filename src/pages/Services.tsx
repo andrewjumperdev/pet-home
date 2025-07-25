@@ -27,7 +27,7 @@ type Service = {
 };
 
 export const services: Service[] = [
- {
+  {
     id: 1,
     title: "FORMULE FLASH",
     subtitle: "Journée",
@@ -86,7 +86,7 @@ export default function Services() {
         <h2 className="text-3xl md:text-4xl font-extrabold text-center text-blue-500 mb-12">
           SERVICES ET TARIFS
         </h2>
-            <AnimatedOfferBanner />
+        <AnimatedOfferBanner />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service) => (
             <motion.article
@@ -148,6 +148,12 @@ export default function Services() {
   );
 }
 
+const timeOptions = Array.from({ length: 13 * 2 }, (_, i) => {
+  const hour = 9 + Math.floor(i / 2);
+  const minute = i % 2 === 0 ? "00" : "30";
+  return `${hour.toString().padStart(2, "0")}:${minute}`;
+});
+
 function BookingModal({
   service,
   onClose,
@@ -168,6 +174,10 @@ function BookingModal({
     { name: string; breed: string; age: string }[]
   >([{ name: "", breed: "", age: "" }]);
   const [touched, setTouched] = useState<boolean[]>([false]);
+  const [arrivalTime, setArrivalTime] = useState("");
+  const [departureTime, setDepartureTime] = useState("");
+  const [isSterilized, setIsSterilized] = useState<string>("");
+
 
   useEffect(() => {
     async function fetchBooked() {
@@ -210,28 +220,46 @@ function BookingModal({
       : dogSmallGif;
   const { icon, ...serviceSerializable } = service;
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    // 1) Validamos aquí y SOLO aquí.
-    const hasErrors = details.some(
-      (d) => !d.name.trim() || !d.breed.trim() || !(Number(d.age) > 0)
-    );
-    if (hasErrors || !selectedRange || largeCount > 1) {
-      // Marcamos todos como touched para que se muestren los errores
-      setTouched(Array(quantity).fill(true));
-      return;
-    }
-    // 3) Finalmente navegamos al checkout
-    navigate("/checkout", {
-      state: {
-        service: serviceSerializable,
-        selectedRange,
-        quantity,
-        sizes,
-        details,
-      },
-    });
-    onClose();
+const handleSubmit = async (e: FormEvent) => {
+  e.preventDefault();
+  const hasErrors = details.some(
+    (d) => !d.name.trim() || !d.breed.trim() || !(Number(d.age) > 0)
+  );
+  if (
+    hasErrors ||
+    !selectedRange ||
+    largeCount > 1 ||
+    !arrivalTime ||
+    !departureTime ||
+    isSterilized === ""
+  ) {
+    setTouched(Array(quantity).fill(true));
+    return;
+  }
+
+  navigate("/checkout", {
+    state: {
+      service: serviceSerializable,
+      selectedRange,
+      quantity,
+      sizes,
+      details,
+      arrivalTime,
+      departureTime,
+      isSterilized,
+    },
+  });
+  onClose();
+};
+
+
+  const needsExtraCharge = () => {
+    if (!arrivalTime || !departureTime) return false;
+    const [ah, am] = arrivalTime.split(":").map(Number);
+    const [dh, dm] = departureTime.split(":").map(Number);
+    const totalArrival = ah * 60 + am;
+    const totalDeparture = dh * 60 + dm;
+    return totalDeparture - totalArrival > 120;
   };
 
   return (
@@ -261,10 +289,13 @@ function BookingModal({
           Réservation - {service.title}
         </h4>
         {step === 1 ? (
-          <div className="text-center">
-            <p className="mb-4">Sélectionnez un intervalle :</p>
+          <div className="bg-white p-6 max-w-xl mx-auto text-center">
+            <h2 className="text-2xl font-bold text-blue-700 mb-4">
+              Sélectionnez vos dates
+            </h2>
+
             {loadingDates ? (
-              <p>Chargement...</p>
+              <p className="text-gray-600">Chargement...</p>
             ) : (
               <Calendar
                 selectRange
@@ -276,12 +307,69 @@ function BookingModal({
                   bookedDates.includes(date.toISOString().split("T")[0])
                 }
                 value={selectedRange || new Date()}
+                className="rounded-xl mx-auto shadow"
               />
             )}
+
+            {selectedRange && (
+              <p className="text-sm text-gray-500 mt-2">
+                {Math.round(
+                  (selectedRange[1].getTime() - selectedRange[0].getTime()) /
+                    (1000 * 60 * 60 * 24)
+                )}{" "}
+                nuits
+              </p>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Heure d’arrivée
+                </label>
+                <select
+                  value={arrivalTime}
+                  onChange={(e) => setArrivalTime(e.target.value)}
+                  className="w-full border-gray-300 rounded-lg p-3 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">-- Sélectionner --</option>
+                  {timeOptions.map((time) => (
+                    <option key={`arrival-${time}`} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Heure de départ
+                </label>
+                <select
+                  value={departureTime}
+                  onChange={(e) => setDepartureTime(e.target.value)}
+                  className="w-full border-gray-300 rounded-lg p-3 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">-- Sélectionner --</option>
+                  {timeOptions.map((time) => (
+                    <option key={`departure-${time}`} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {needsExtraCharge() && (
+              <p className="text-red-600 text-sm mt-3 font-medium">
+                Un supplément de <strong>12€</strong> sera appliqué si le départ
+                excède de deux heures l'heure d’arrivée.
+              </p>
+            )}
+
             <button
               onClick={() => setStep(2)}
-              disabled={!selectedRange}
-              className="mt-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 px-4 rounded"
+              disabled={!selectedRange || !arrivalTime || !departureTime}
+              className="mt-6 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Suivant
             </button>
@@ -303,22 +391,26 @@ function BookingModal({
             </div>
             {service.type === "dog" ? (
               <>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium">
+                <div className="mb-6">
+                  <label className="block text-lg font-semibold text-gray-700 mb-2">
                     Nombre de chiens
                   </label>
                   <select
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
-                    className="mt-1 w-full border rounded p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-lg border px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300"
                   >
-                    <option value={1}>1</option>
-                    <option value={2}>2</option>
+                    {[1, 2, 3].map((num) => (
+                      <option key={num} value={num}>
+                        {num}
+                      </option>
+                    ))}
                   </select>
                 </div>
+
                 {sizes.map((sz, i) => (
-                  <div key={i} className="mb-4">
-                    <label className="block text-sm font-medium">
+                  <div key={i} className="mb-6">
+                    <label className="block text-lg font-semibold text-gray-700 mb-2">
                       Taille chien {i + 1}
                     </label>
                     <select
@@ -328,18 +420,35 @@ function BookingModal({
                           prev.map((s, idx) => (idx === i ? e.target.value : s))
                         )
                       }
-                      className="mt-1 w-full border rounded p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full rounded-lg border px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300"
                     >
-                      <option>Petit & moyen chien</option>
-                      <option>Gros chien</option>
+                      <option value="Petit & moyen chien">
+                        Petit & moyen chien
+                      </option>
+                      <option value="Gros chien">Gros chien</option>
                     </select>
                     {i === 1 && largeCount > 1 && (
-                      <p className="text-red-600 text-xs">
+                      <p className="text-red-600 text-sm mt-1">
                         Un seul gros autorisé
                       </p>
                     )}
                   </div>
                 ))}
+
+                <div className="mb-6">
+                  <label className="block text-lg font-semibold text-gray-700 mb-2">
+                    Castré / Stérilisé
+                  </label>
+                  <select
+                    value={isSterilized}
+                    onChange={(e) => setIsSterilized(e.target.value)}
+                    className="w-full rounded-lg border px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300"
+                  >
+                    <option value="">Sélectionner</option>
+                    <option value="oui">Oui</option>
+                    <option value="non">Non</option>
+                  </select>
+                </div>
               </>
             ) : (
               <div className="mb-4">

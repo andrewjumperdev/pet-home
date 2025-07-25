@@ -80,9 +80,9 @@ const APropos: React.FC = () => {
           <h1 id="about-heading" className="text-4xl font-extrabold text-black">
             Qui sommes-nous ?
           </h1>
-          <p className="mt-4 text-lg text-gray-700 text-start">
+          <p className="mt-4 text-lg text-gray-900 text-start font-serif font-semibold">
             PetHome n’est pas une pension ni un refuge où sa mascotte partagera
-            son lieu de vie avec des dizaines d’autres chiens/chats. PetHome est
+            son lieu de vie avec des dizaines d’autres chiens et chats. PetHome est
             une vraie maison d’accueil où votre mascotte se sent en vacances
             avec sa seconde famille.
           </p>
@@ -91,7 +91,7 @@ const APropos: React.FC = () => {
         {/* Team Photos & Text */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-16 items-start">
           {/* Text Column */}
-          <div className="order-1 md:order-1 space-y-4 text-gray-800 leading-relaxed">
+          <div className="order-1 md:order-1 space-y-4 text-gray-700 leading-relaxed">
             <p>
               Nous sommes un couple passionné avec de très longues années
               d’expérience dans la garde et le bien-être des animaux. <br /> Mon
@@ -170,7 +170,7 @@ const APropos: React.FC = () => {
                 className="flex items-center p-4 border rounded-xl shadow-sm"
               >
                 <Icon className={`w-6 h-6 ${color}`} />
-                <span className="ml-3 text-gray-700">{label}</span>
+                <span className="ml-3 text-gray-700 font-semibold">{label}</span>
               </li>
             ))}
           </ul>

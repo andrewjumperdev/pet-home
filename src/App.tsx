@@ -17,6 +17,7 @@ import LoginPage from './pages/LoginPage';
 import AdminRegister from './pages/AdminRegister';
 import { ScrollToTop } from './components/ScrollToTop';
 import Success from './pages/Success';
+import Reviews from './pages/Reviews';
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -49,8 +50,8 @@ const App: React.FC = () => {
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/services" element={<Services />} />
             <Route path="/tarifs" element={<Services />} />
+            <Route path="/avis" element={<Reviews />} />
             <Route path="/apropos" element={<APropos />} />
             <Route path="/gallery" element={<GalleryPage />} />
             <Route path="/faq" element={<FAQPage />} />

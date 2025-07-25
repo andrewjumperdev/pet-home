@@ -2,7 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import ReviewCard from "./ReviewCard";
-import CustomButton from "./CustomButton";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination, Autoplay, Navigation } from "swiper/modules";
+import "swiper/modules";
+import "swiper/swiper-bundle.css";
 
 type Review = {
   _id: string;
@@ -27,55 +30,58 @@ const ParallaxSection: React.FC = () => {
   }, []);
 
   return (
-    <section className="relative overflow-hidden py-8">
+    <section className="relative overflow-hidden py-16">
+      {/* Fondo parallax */}
       <div
         className="absolute inset-0 bg-fixed bg-center bg-cover z-0"
-        style={{
-          backgroundImage: "url('/parallax.jpg')",
-        }}
+        style={{ backgroundImage: "url('/parallax.jpg')" }}
       />
-
       <div className="absolute inset-0 bg-black/60 z-10" />
-      <div className="relative z-20 flex flex-col items-center justify-center h-full text-center text-white px-4">
-        <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4">
-          Retours d'expérience
-        </h2>
-        <p className="text-base md:text-xl lg:text-2xl max-w-xl mx-auto mb-6">
-          Partez l'esprit tranquille et faites-nous confiance: <br />
-          votre boule d'amour sera chouchoutée !
+
+      <div className="relative z-20 text-white px-4 text-center">
+        <h1 className="text-3xl md:text-5xl font-bold mb-4">
+          Aventures, câlins et repos
+        </h1>
+        <p className="text-lg md:text-2xl font-light mb-8">
+          <span className="font-semibold">
+            Partez l'esprit tranquille et faites-nous confiance: votre boule
+            d'amour sera chouchoutée !
+          </span>
         </p>
 
-        {/* Contenido que antes estaba fuera */}
-        <div className="w-full max-w-6xl mx-auto mb-6">
+        <div className="w-full max-w-6xl mx-auto">
           {loading ? (
             <p>Chargement...</p>
           ) : reviews.length === 0 ? (
             <p>Aucun avis trouvé.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {reviews.slice(0, 3).map((review) => (
-                <ReviewCard key={review._id} review={review} />
+            <Swiper
+              modules={[Pagination, Autoplay, Navigation]}
+              spaceBetween={20}
+              slidesPerView={1}
+              navigation
+              pagination={{ clickable: true }}
+              autoplay={{ delay: 5000 }}
+              breakpoints={{
+                640: { slidesPerView: 1 },
+                768: { slidesPerView: 2 },
+                1024: { slidesPerView: 3 },
+              }}
+              className="pb-10"
+            >
+              {reviews.slice(0, 6).map((review) => (
+                <SwiperSlide key={review._id} className="flex h-full">
+                  <div className="w-full h-full">
+                    <ReviewCard review={review} />
+                  </div>
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           )}
-        </div>
-        <div className="flex sm:flex-col md:flex-row gap-4">
-          {" "}
-          <CustomButton
-            label="Contactez-nous"
-            alt="Aller à la page de contact"
-            variant="primary"
-            to="/contact"
-          />
-          <CustomButton
-            label="Laissez un commentaire"
-            alt="Aller à la page de Avis"
-            variant="primary"
-            to="/tarifs"
-          />
         </div>
       </div>
     </section>
   );
 };
+
 export default ParallaxSection;

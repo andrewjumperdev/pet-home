@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, FormEvent } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -25,9 +27,8 @@ export default function ReviewForm() {
   const [success, setSuccess] = useState(false);
   const [shake, setShake] = useState(false);
 
-  const validate = () => {
-    return author.trim() && dogName.trim() && email.trim() && starRating >= 1 && text.trim();
-  };
+  const validate = () =>
+    author.trim() && dogName.trim() && email.trim() && starRating >= 1 && text.trim();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -37,9 +38,9 @@ export default function ReviewForm() {
       setTimeout(() => setShake(false), 500);
       return;
     }
+
     setError(null);
     setSubmitting(true);
-
     try {
       const colRef = collection(db, "reviews");
       const newReview = {
@@ -64,98 +65,119 @@ export default function ReviewForm() {
   return (
     <motion.form
       onSubmit={handleSubmit}
-      className="max-w-lg p-6 bg-white rounded-2xl space-y-4"
+      className="w-full max-w-2xl mx-auto bg-white p-8 md:p-10 rounded-3xl shadow-xl space-y-6"
       animate={shake ? { x: [0, -10, 10, -10, 10, 0] } : {}}
       transition={{ duration: 0.5 }}
     >
-      <h3 className="text-xl font-semibold text-gray-800">Laisser un avis</h3>
-      {error && <p className="text-red-600">{error}</p>}
-      {success && <p className="text-green-600">Merci pour votre avis !</p>}
-
-      {/** Champ Nom complet **/}
-      <motion.div
-        animate={error && !author.trim() ? { x: [0, -5, 5, -5, 5, 0] } : {}}
-        transition={{ duration: 0.4 }}
+      <motion.h2
+        className="text-2xl md:text-3xl font-bold text-gray-800 text-center"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
       >
-        <label className="block text-sm font-medium text-gray-700">Nom complet</label>
+        Laisser un avis ✍️
+      </motion.h2>
+
+      {error && <p className="text-red-600 text-center">{error}</p>}
+      {success && <p className="text-green-600 text-center">Merci pour votre avis !</p>}
+
+      {/* Nom complet */}
+      <motion.div
+        animate={error && !author.trim() ? { x: [0, -5, 5, -5, 0] } : {}}
+        transition={{ duration: 0.3 }}
+      >
+        <label className="block mb-1 text-sm font-semibold text-gray-700 text-start">Nom complet</label>
         <input
           type="text"
           value={author}
           onChange={e => setAuthor(e.target.value)}
-          required
-          className={`mt-1 w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${error && !author.trim() ? 'border-red-500' : ''}`}
+          className={`w-full px-4 py-2 rounded-lg border ${
+            error && !author.trim() ? 'border-red-500' : 'border-gray-300'
+          } focus:ring-2 focus:ring-blue-500 focus:outline-none`}
+          placeholder="Votre nom"
         />
       </motion.div>
 
-      {/** Champ Nom du chien **/}
+      {/* Nom du chien */}
       <motion.div
-        animate={error && !dogName.trim() ? { x: [0, -5, 5, -5, 5, 0] } : {}}
-        transition={{ duration: 0.4 }}
+        animate={error && !dogName.trim() ? { x: [0, -5, 5, -5, 0] } : {}}
+        transition={{ duration: 0.3 }}
       >
-        <label className="block text-sm font-medium text-gray-700">Nom du chien</label>
+        <label className="block mb-1 text-sm font-semibold text-gray-700 text-start">Nom du chien</label>
         <input
           type="text"
           value={dogName}
           onChange={e => setDogName(e.target.value)}
-          required
-          className={`mt-1 w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${error && !dogName.trim() ? 'border-red-500' : ''}`}
+          className={`w-full px-4 py-2 rounded-lg border ${
+            error && !dogName.trim() ? 'border-red-500' : 'border-gray-300'
+          } focus:ring-2 focus:ring-blue-500 focus:outline-none`}
+          placeholder="Ex: Max, Bella..."
         />
       </motion.div>
 
-      {/** Champ Email **/}
+      {/* Email */}
       <motion.div
-        animate={error && !email.trim() ? { x: [0, -5, 5, -5, 5, 0] } : {}}
-        transition={{ duration: 0.4 }}
+        animate={error && !email.trim() ? { x: [0, -5, 5, -5, 0] } : {}}
+        transition={{ duration: 0.3 }}
       >
-        <label className="block text-sm font-medium text-gray-700">Email</label>
+        <label className="block mb-1 text-sm font-semibold text-gray-700 text-start">Email</label>
         <input
           type="email"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          required
-          className={`mt-1 w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${error && !email.trim() ? 'border-red-500' : ''}`}
+          className={`w-full px-4 py-2 rounded-lg border ${
+            error && !email.trim() ? 'border-red-500' : 'border-gray-300'
+          } focus:ring-2 focus:ring-blue-500 focus:outline-none`}
+          placeholder="exemple@email.com"
         />
       </motion.div>
 
-      {/** Champ Note **/}
+      {/* Note en étoiles */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">Note</label>
-        <div className="flex space-x-1 mt-1">
+        <label className="block mb-1 text-sm font-semibold text-gray-700 text-start">Note</label>
+        <div className="flex items-center space-x-2 mt-1">
           {Array.from({ length: 5 }, (_, i) => i + 1).map(star => (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.2 }}
               key={star}
               type="button"
               onClick={() => setStarRating(star)}
-              className={`text-2xl ${star <= starRating ? 'text-yellow-400' : 'text-gray-300'}`}
+              className={`text-3xl transition-colors duration-200 ${
+                star <= starRating ? 'text-yellow-400' : 'text-gray-300'
+              }`}
               aria-label={`${star} étoiles`}
             >
               ★
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
 
-      {/** Champ Commentaire **/}
+      {/* Commentaire */}
       <motion.div
-        animate={error && !text.trim() ? { x: [0, -5, 5, -5, 5, 0] } : {}}
-        transition={{ duration: 0.4 }}
+        animate={error && !text.trim() ? { x: [0, -5, 5, -5, 0] } : {}}
+        transition={{ duration: 0.3 }}
       >
-        <label className="block text-sm font-medium text-gray-700">Commentaire</label>
+        <label className="block mb-1 text-sm font-semibold text-gray-700 text-start">Commentaire</label>
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
-          required
           rows={4}
-          className={`mt-1 w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${error && !text.trim() ? 'border-red-500' : ''}`}
+          className={`w-full px-4 py-2 rounded-lg border ${
+            error && !text.trim() ? 'border-red-500' : 'border-gray-300'
+          } focus:ring-2 focus:ring-blue-500 focus:outline-none`}
+          placeholder="Votre retour d'expérience..."
         />
       </motion.div>
 
-      <CustomButton
-        label={submitting ? 'Envoi...' : 'Envoyer mon avis'}
-        alt="Envoyer mon avis"
-        variant="primary"
-        type="submit"
-      />
+      {/* Bouton */}
+      <div className="text-center pt-4">
+        <CustomButton
+          label={submitting ? 'Envoi en cours...' : 'Envoyer mon avis'}
+          alt="Envoyer un avis"
+          type="submit"
+          variant="primary"
+        />
+      </div>
     </motion.form>
   );
 }
