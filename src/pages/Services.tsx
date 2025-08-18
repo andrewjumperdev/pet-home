@@ -469,7 +469,7 @@ const handleSubmit = async (e: FormEvent) => {
               <div key={i} className="mb-4 space-y-2">
                 <div>
                   <label className="block text-sm font-medium">
-                    Nom complet
+                    Nom
                   </label>
                   <input
                     type="text"

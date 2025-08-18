@@ -67,6 +67,9 @@ function CheckoutForm({
   details,
   start,
   end,
+  arrivalTime,  
+  departureTime,
+  isSterilized, 
   onSuccess,
 }: {
   total: number;
@@ -77,6 +80,9 @@ function CheckoutForm({
   details: any[];
   start: Date;
   end: Date;
+  arrivalTime: string;  
+  departureTime: string;
+  isSterilized: boolean;
   onSuccess: () => void;
 }) {
   const stripe = useStripe();
@@ -93,9 +99,23 @@ function CheckoutForm({
     setError(null);
 
     try {
-      const { data } = await axios.post("/payments/create-payment-intent", {
-        amount: total,
-      });
+      const { data } = await axios.post(
+        "https://api.maisonpourpets.com/create-payment-intent",
+        {
+          amount: total,
+          client_name: contact.name,
+          client_email: contact.email,      
+          service: service.title,            
+          quantity,                          
+          sizes,                             
+          details,                           
+          start_date: start.toISOString(),   
+          end_date: end.toISOString(),       
+          arrival_time: arrivalTime,         
+          departure_time: departureTime,     
+          isSterilized,                      
+        }
+      );
 
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) {
@@ -519,6 +539,9 @@ export default function Checkout() {
                     sizes={sizes}
                     details={details}
                     contact={contact}
+                    arrivalTime={arrivalTime}
+                    departureTime={departureTime}
+                    isSterilized={isSterilized}
                     onSuccess={onPaymentSuccess}
                   />
                 </Elements>

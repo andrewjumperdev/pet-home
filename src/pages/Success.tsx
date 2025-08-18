@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckCircle, CalendarDays, User, Info } from "lucide-react";
+import { CheckCircle, CalendarDays, User } from "lucide-react";
 
 export default function Success() {
   const location = useLocation();
@@ -15,7 +15,7 @@ export default function Success() {
     );
   }
 
-  const { order, contact, serviceId, dates, bookingCount } = data;
+  const { /*order,*/ contact, serviceId, dates, bookingCount } = data;
 
   return (
     <motion.div
@@ -39,13 +39,13 @@ export default function Success() {
               <strong>Nom:</strong> {contact.name}
             </span>
           </div>
-
+{/* 
           <div className="flex items-center space-x-2">
             <Info className="text-blue-500" />
             <span>
               <strong>Référence de paiement:</strong> {order.id}
             </span>
-          </div>
+          </div> */}
 
           <div className="flex items-center space-x-2">
             <CalendarDays className="text-blue-500" />
