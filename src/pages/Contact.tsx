@@ -274,14 +274,14 @@ const ContactPage: React.FC = () => {
                 rows={4}
                 required
               />
-              <label className="inline-flex items-center space-x-2">
+              {/* <label className="inline-flex items-center space-x-2">
                 <input
                   type="checkbox"
                   checked={values.newsletter}
                   onChange={handleChange("newsletter")}
                 />
                 <span>S'inscrire à notre newsletter & offres exclusives</span>
-              </label>
+              </label> */}
             </motion.div>
 
             {error && <p className="text-red-500">{error}</p>}
