@@ -74,7 +74,7 @@ export default function ReviewForm() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        Laisser un avis ✍️
+        Laissez un avis ✍️
       </motion.h2>
 
       {error && <p className="text-red-600 text-center">{error}</p>}
@@ -85,7 +85,7 @@ export default function ReviewForm() {
         animate={error && !author.trim() ? { x: [0, -5, 5, -5, 0] } : {}}
         transition={{ duration: 0.3 }}
       >
-        <label className="block mb-1 text-sm font-semibold text-gray-700 text-start">Nom complet</label>
+        <label className="block mb-1 text-sm font-semibold text-gray-700 text-start">Prénom</label>
         <input
           type="text"
           value={author}

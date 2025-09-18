@@ -4,7 +4,6 @@
 import { useEffect, useState } from "react";
 import ReviewCard from "../components/ReviewCard";
 import ReviewForm from "../components/ReviewForm";
-import CustomButton from "../components/CustomButton";
 
 
 type Review = {
@@ -43,7 +42,7 @@ export default function AvisPage() {
           Ils nous ont fait confiance
         </h1>
         <p className="text-lg text-gray-600 mb-12">
-          Découvrez ce que nos clients disent de leur expérience chez nous.
+           Parce qu’une belle expérience mérite d’être partagée.
         </p>
 
         {loading ? (
@@ -62,13 +61,6 @@ export default function AvisPage() {
             <ReviewForm />
           </div>
         <div className="mt-12">
-        <CustomButton
-          label={'Retour à l\'accueil'}
-          alt="Retour à l'accueil"
-          type="button"
-          variant="primary"
-          to="/"
-        />
         </div>
       </div>
     </main>

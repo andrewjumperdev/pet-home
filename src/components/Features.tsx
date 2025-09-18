@@ -15,7 +15,7 @@ const Features: React.FC = () => {
           {
             emoji: "🐶🐱",
             title: "Une garderie de haute qualité exclusive",
-            desc: "pour les animaux d’un seul propriétaire à la fois",
+            desc: "avec deux chiens ou deux chats à la fois maximum",
           },
           {
             emoji: "🏞️",
@@ -25,7 +25,7 @@ const Features: React.FC = () => {
           {
             emoji: "📷",
             title: "Photos quotidiennes et communication 7j/7",
-            desc: "Pour suivre leur bonheur jour après jour",
+            desc: "pour suivre leur bonheur jour après jour",
           }
         ].map((feat, i) => (
           <div

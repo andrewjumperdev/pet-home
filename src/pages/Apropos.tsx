@@ -82,8 +82,8 @@ const APropos: React.FC = () => {
           </h1>
           <p className="mt-4 text-lg text-gray-900 text-start font-serif font-semibold">
             PetHome n’est pas une pension ni un refuge où sa mascotte partagera
-            son lieu de vie avec des dizaines d’autres chiens et chats. PetHome est
-            une vraie maison d’accueil où votre mascotte se sent en vacances
+            son lieu de vie avec des dizaines d’autres chiens et chats. PetHome
+            est une vraie maison d’accueil où votre mascotte se sent en vacances
             avec sa seconde famille.
           </p>
         </header>
@@ -115,13 +115,17 @@ const APropos: React.FC = () => {
               pour ceux avec beaucoup d'énergie.
             </p>
             <p>
-              Nous accueillons jusqu'à deux chiens/chats d'un SEUL propriétaire
-              à la fois pour offrir toute notre attention et assurer un séjour
-              exclusif de haute qualité. <br /> <br />
+              Le chien ou le chat est généralement accueilli seul. Toutefois,
+              nous pouvons recevoir jusqu’à deux animaux de deux propriétaires
+              différents en même temps, uniquement avec l’accord préalable de
+              leurs propriétaires. Ce service de garde exclusive nous permet de
+              leur consacrer toute notre attention et de garantir un séjour
+              privilégié et de haute qualité. 
+              <br /> <br />
               N’hésitez pas à nous contacter si vous avez une question, nous
               serons ravis de vous répondre! On a hâte de rencontrer votre
               petite boule d’amour et de lui faire passer de merveilleuses
-              vacances chez nous :)
+              vacances chez nous 😄
             </p>
           </div>
 
@@ -170,7 +174,9 @@ const APropos: React.FC = () => {
                 className="flex items-center p-4 border rounded-xl shadow-sm"
               >
                 <Icon className={`w-6 h-6 ${color}`} />
-                <span className="ml-3 text-gray-700 font-semibold">{label}</span>
+                <span className="ml-3 text-gray-700 font-semibold">
+                  {label}
+                </span>
               </li>
             ))}
           </ul>

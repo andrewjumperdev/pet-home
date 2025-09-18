@@ -32,7 +32,7 @@ export const services: Service[] = [
     title: "FORMULE FLASH",
     subtitle: "Journée",
     description: "Parfait pour des escapades courtes",
-    rates: ["19€/jour (jusqu’à 40kg max)", "2 chiens: -10% sur le 2ème chien"],
+    rates: ["20€/jour (4h à 9h (jusqu’à 40kg max)", "12€ la demi-journée (1h à 4h)", "2 chiens: -10% sur le 2ème chien"],
     icon: <DogIcon className="h-10 w-10 text-yellow-500" />,
     type: "dog",
   },

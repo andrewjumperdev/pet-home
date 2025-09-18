@@ -9,6 +9,7 @@ import { Textarea } from "../components/Textarea";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Helmet } from "react-helmet";
+import { Link } from "react-router-dom";
 
 interface ContactFormValues {
   name: string;
@@ -24,9 +25,9 @@ interface ContactFormValues {
 }
 
 const services = [
-  "Garderie Journalière",
-  "Pension de Nuit",
-  "Promenade Individuelle",
+  "Formule Flash",
+  "Formule Séjour",
+  "Formule Félin",
 ];
 
 const fieldAnim = {
@@ -124,9 +125,10 @@ const ContactPage: React.FC = () => {
           {/* Contact info card */}
           <Card className="shadow-lg rounded-2xl">
             <CardHeader>
-              <CardTitle className="text-2xl">Contactez-nous</CardTitle>
+              <CardTitle className="text-2xl">Une question ? Consultez d’abord le <Link to="/faq" className="text-blue-500 underline">FAQ</Link></CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <p>Si vous n’avez pas trouvé votre réponse, contactez-nous</p>
               <div className="flex items-start space-x-2">
                 <MapPin />
                 <p>Antony, Île-de-France</p>
@@ -147,7 +149,7 @@ const ContactPage: React.FC = () => {
             className="space-y-6"
           >
             <h2 className="text-2xl font-semibold">
-              Parlez-nous de votre compagnon
+              Contactez-nous
             </h2>
 
             {/* Datos básicos */}
@@ -198,7 +200,7 @@ const ContactPage: React.FC = () => {
                     required
                   >
                     <option value="" disabled>
-                      ¿Chien o Chat?
+                      ¿Chien ou Chat?
                     </option>
                     <option value="dog">Chien</option>
                     <option value="cat">Chat</option>
@@ -300,7 +302,7 @@ const ContactPage: React.FC = () => {
               className={`w-full py-2 rounded-lg text-white transition
               ${loading ? "bg-blue-300" : "bg-blue-500 hover:bg-blue-600"}`}
             >
-              {loading ? "Enviando..." : "Envoyer la demande"}
+              {loading ? "Enviando..." : "Envoyer"}
             </motion.button>
           </motion.form>
         </motion.section>
