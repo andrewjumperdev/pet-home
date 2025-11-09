@@ -3,10 +3,13 @@ import { Dog as DogIcon, Cat as CatIcon, PawPrint, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReviewsPage from "../components/Temoignages";
 import { useNavigate } from "react-router-dom";
-import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { db } from "../lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
+import { DateRange } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import { addDays } from "date-fns";
 
 import dogSmallGif from "/images/dog_small.gif";
 import dogLargeGif from "/images/dog_large.gif";
@@ -16,28 +19,29 @@ import { Helmet } from "react-helmet";
 import ReviewForm from "../components/ReviewForm";
 import AnimatedOfferBanner from "../components/AnimatedOfferBanner";
 
-type Service = {
-  id: number;
+export interface Service {
+  id: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   description: string;
-  rates: string[];
+  rates?: string[];
+  price?: number;
   icon: JSX.Element;
-  type: "dog" | "cat";
-};
+  type: "dog" | "cat" | "flash";
+}
 
 export const services: Service[] = [
   {
-    id: 1,
+    id: "flash",
     title: "FORMULE FLASH",
     subtitle: "Journée",
     description: "Parfait pour des escapades courtes",
-    rates: ["20€/jour (4h à 9h (jusqu’à 40kg max)", "12€ la demi-journée (1h à 4h)", "2 chiens: -10% sur le 2ème chien"],
+    rates: ["20€/jour (4h à 9h)", "12€ la demi-journée (1h à 4h)", "2 chiens: -10% sur le 2ème"],
     icon: <DogIcon className="h-10 w-10 text-yellow-500" />,
     type: "dog",
   },
   {
-    id: 2,
+    id: "sejour",
     title: "FORMULE SÉJOUR",
     subtitle: "1 nuit et plus",
     description: "Idéal pour les vacances",
@@ -46,7 +50,7 @@ export const services: Service[] = [
     type: "dog",
   },
   {
-    id: 3,
+    id: "feline",
     title: "FORMULE FÉLIN",
     subtitle: "Journée ou nuit",
     description: "Confort et câlins garantis",
@@ -111,9 +115,9 @@ export default function Services() {
                   {service.description}
                 </p>
                 <ul className="list-disc list-inside text-gray-700 space-y-1 text-sm">
-                  {service.rates.map((rate, i) => (
-                    <li key={i}>{rate}</li>
-                  ))}
+                {(service.rates || []).map((rate, i) => (
+                  <i key={i}>{rate}</i>
+                ))}
                 </ul>
               </div>
               <CustomButton
@@ -178,7 +182,6 @@ function BookingModal({
   const [departureTime, setDepartureTime] = useState("");
   const [isSterilized, setIsSterilized] = useState<string>("");
 
-
   useEffect(() => {
     async function fetchBooked() {
       setLoadingDates(true);
@@ -188,6 +191,7 @@ function BookingModal({
       );
       const snapshot = await getDocs(q);
       setBookedDates(snapshot.docs.map((doc) => doc.data().date as string));
+      console.log(bookedDates);
       setLoadingDates(false);
     }
     fetchBooked();
@@ -220,38 +224,37 @@ function BookingModal({
       : dogSmallGif;
   const { icon, ...serviceSerializable } = service;
 
-const handleSubmit = async (e: FormEvent) => {
-  e.preventDefault();
-  const hasErrors = details.some(
-    (d) => !d.name.trim() || !d.breed.trim() || !(Number(d.age) > 0)
-  );
-  if (
-    hasErrors ||
-    !selectedRange ||
-    largeCount > 1 ||
-    !arrivalTime ||
-    !departureTime ||
-    isSterilized === ""
-  ) {
-    setTouched(Array(quantity).fill(true));
-    return;
-  }
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    const hasErrors = details.some(
+      (d) => !d.name.trim() || !d.breed.trim() || !(Number(d.age) > 0)
+    );
+    if (
+      hasErrors ||
+      !selectedRange ||
+      largeCount > 1 ||
+      !arrivalTime ||
+      !departureTime ||
+      isSterilized === ""
+    ) {
+      setTouched(Array(quantity).fill(true));
+      return;
+    }
 
-  navigate("/checkout", {
-    state: {
-      service: serviceSerializable,
-      selectedRange,
-      quantity,
-      sizes,
-      details,
-      arrivalTime,
-      departureTime,
-      isSterilized,
-    },
-  });
-  onClose();
-};
-
+    navigate("/checkout", {
+      state: {
+        service: serviceSerializable,
+        selectedRange,
+        quantity,
+        sizes,
+        details,
+        arrivalTime,
+        departureTime,
+        isSterilized,
+      },
+    });
+    onClose();
+  };
 
   const needsExtraCharge = () => {
     if (!arrivalTime || !departureTime) return false;
@@ -297,21 +300,40 @@ const handleSubmit = async (e: FormEvent) => {
             {loadingDates ? (
               <p className="text-gray-600">Chargement...</p>
             ) : (
-              <Calendar
-                selectRange
-                onChange={(range) =>
-                  Array.isArray(range) &&
-                  setSelectedRange(range as [Date, Date])
-                }
-                tileDisabled={({ date }) =>
-                  bookedDates.includes(date.toISOString().split("T")[0])
-                }
-                value={selectedRange || new Date()}
-                className="rounded-xl mx-auto shadow"
+              <DateRange
+                ranges={[
+                  {
+                    startDate: selectedRange?.[0] || new Date(),
+                    endDate:
+                      service.title === "FORMULE FLASH"
+                        ? selectedRange?.[0] || new Date()
+                        : selectedRange?.[1] || addDays(new Date(), 1),
+                    key: "selection",
+                  },
+                ]}
+                onChange={(item) => {
+                  let { startDate, endDate } = item.selection;
+
+                  if (service.title === "FORMULE FLASH") {
+                    // Solo permite 1 día: forzamos que la fecha de fin sea igual a la de inicio
+                    endDate = startDate;
+                  }
+
+                  if (startDate && endDate) {
+                    setSelectedRange([startDate, endDate]);
+                  }
+                }}
+                minDate={new Date()}
+                rangeColors={["#2563eb"]}
+                moveRangeOnFirstSelection={false}
+                showDateDisplay={false}
+                direction="horizontal"
+                months={1}
+                className="rounded-xl mx-auto shadow-lg"
               />
             )}
 
-            {selectedRange && (
+            {selectedRange && service.title !== "FORMULE FLASH" && (
               <p className="text-sm text-gray-500 mt-2">
                 {Math.round(
                   (selectedRange[1].getTime() - selectedRange[0].getTime()) /
@@ -320,6 +342,7 @@ const handleSubmit = async (e: FormEvent) => {
                 nuits
               </p>
             )}
+
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
               <div>
@@ -468,9 +491,7 @@ const handleSubmit = async (e: FormEvent) => {
             {details.map((d, i) => (
               <div key={i} className="mb-4 space-y-2">
                 <div>
-                  <label className="block text-sm font-medium">
-                    Nom
-                  </label>
+                  <label className="block text-sm font-medium">Nom</label>
                   <input
                     type="text"
                     value={d.name}

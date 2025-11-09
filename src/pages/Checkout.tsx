@@ -11,6 +11,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import { addDays } from "date-fns";
 import {
   Calendar as CalendarIcon,
   Info,
@@ -20,14 +21,131 @@ import {
 import { db } from "../lib/firebase";
 import { addDoc, collection } from "firebase/firestore";
 import { services as allServices } from "./Services";
+import { DateRange } from "react-date-range";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
+/* ---------------------- Types ---------------------- */
+type ServiceType = "flash" | "sejour" | "felin" | string;
+
+interface Service {
+  id: ServiceType;
+  type?: string;
+  title?: string;
+}
 
 interface ContactInfo {
   name: string;
   email: string;
+  phone?: string;
 }
 
+/* ---------------------- Util: cálculo profesional ---------------------- */
+interface BookingCalculationParams {
+  serviceId: ServiceType;
+  datepickerRange: [Date, Date];
+  quantity: number;
+  arrivalHour?: number | null;
+  departureHour?: number | null;
+  sizes?: string[];
+}
+
+function daysInclusive(startDate: Date, endDate: Date) {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const sUTC = Date.UTC(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate()
+  );
+  const eUTC = Date.UTC(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate()
+  );
+  return Math.floor((eUTC - sUTC) / msPerDay) + 1;
+}
+
+export function calculateBookingTotal({
+  serviceId,
+  datepickerRange,
+  quantity,
+  arrivalHour,
+  departureHour,
+  sizes = [],
+}: BookingCalculationParams) {
+  const [start, end] = datepickerRange;
+  const days = Math.max(1, daysInclusive(start, end));
+  const qty = Math.max(1, Math.floor(quantity || 1));
+
+  // helpers
+  const lateBy = (a?: number | null, d?: number | null) =>
+    a != null && d != null ? Math.max(0, d - a) : 0;
+
+  let total = 0;
+  let rate = 0;
+  let message = "";
+
+  const normalizedId = String(serviceId) as ServiceType;
+  console.log("Calculating total for serviceId:", normalizedId);
+
+  switch (normalizedId) {
+    case "1": {
+      // FLASH: si duración <= 4h -> 12€ (demi), sino 20€
+      const duration = lateBy(arrivalHour ?? null, departureHour ?? null) || 4;
+      console.log("Flash duration:", duration);
+      const isHalf = duration <= 4;
+      rate = isHalf ? 12 : 20;
+      total = rate * qty;
+      message =
+        "La demi-journée est limitée à 4 heures. Tout dépassement sera facturé comme une journée complète. Le supplément devra être réglé sur place.";
+      break;
+    }
+
+    case "2": {
+      // SÉJOUR: 23€/noche; 10% sobre el 2º perro; +12€ si salida tardía (>2h)
+      rate = 23;
+      total = rate * days * qty;
+
+      // Descuento 10% sobre el 2º perro: se descuenta 10% del importe equivalente a 1 perro por días
+      if (qty >= 2) {
+        const discountForSecondDog = rate * days * 0.1;
+        total -= discountForSecondDog;
+      }
+
+      if (lateBy(arrivalHour ?? null, departureHour ?? null) > 2) {
+        total += 12;
+      }
+      break;
+    }
+
+    case "felin": {
+      // FÉLIN: 19€/noche; suplemento +10€ si salida tardía (>2h)
+      rate = 19;
+      total = rate * days * qty;
+      if (lateBy(arrivalHour ?? null, departureHour ?? null) > 2) {
+        total += 10;
+      }
+      message =
+        "Un supplément de 10€ sera appliqué si le départ excède de deux heures l'heure d’arrivée.";
+      break;
+    }
+
+    default: {
+      rate = sizes.includes("Gros chien") ? 30 : 23;
+      total = rate * days * qty;
+      break;
+    }
+  }
+
+  return {
+    total: Number(total.toFixed(2)),
+    days,
+    rate,
+    message,
+  };
+}
+
+/* ---------------------- UI: Step indicator ---------------------- */
 function StepIndicator({ step }: { step: number }) {
   const steps = ["Dates", "Coordonnées", "Paiement"];
   return (
@@ -58,6 +176,7 @@ function StepIndicator({ step }: { step: number }) {
   );
 }
 
+/* ---------------------- CheckoutForm (pago) ---------------------- */
 function CheckoutForm({
   total,
   contact,
@@ -67,21 +186,21 @@ function CheckoutForm({
   details,
   start,
   end,
-  arrivalTime,  
+  arrivalTime,
   departureTime,
-  isSterilized, 
+  isSterilized,
   onSuccess,
 }: {
   total: number;
   contact: ContactInfo;
-  service: any;
+  service: Service;
   quantity: number;
   sizes: string[];
   details: any[];
   start: Date;
   end: Date;
-  arrivalTime: string;  
-  departureTime: string;
+  arrivalTime?: string;
+  departureTime?: string;
   isSterilized: boolean;
   onSuccess: () => void;
 }) {
@@ -102,18 +221,18 @@ function CheckoutForm({
       const { data } = await axios.post(
         "https://api.maisonpourpets.com/create-payment-intent",
         {
-          amount: total,
+          amount: Math.round(total * 100),
           client_name: contact.name,
-          client_email: contact.email,      
-          service: service.title,            
-          quantity,                          
-          sizes,                             
-          details,                           
-          start_date: start.toISOString(),   
-          end_date: end.toISOString(),       
-          arrival_time: arrivalTime,         
-          departure_time: departureTime,     
-          isSterilized,                      
+          client_email: contact.email,
+          service: service.title,
+          quantity,
+          sizes,
+          details,
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+          arrival_time: arrivalTime,
+          departure_time: departureTime,
+          isSterilized,
         }
       );
 
@@ -140,9 +259,10 @@ function CheckoutForm({
         return;
       }
 
-      if (paymentResult.paymentIntent.status === "succeeded") {
+      if (paymentResult.paymentIntent?.status === "succeeded") {
         let curr = new Date(start);
-        while (curr <= end) {
+        const endDate = new Date(end);
+        while (curr <= endDate) {
           await addDoc(collection(db, "bookings"), {
             serviceId: service.id,
             date: curr.toISOString().split("T")[0],
@@ -156,6 +276,9 @@ function CheckoutForm({
           curr.setDate(curr.getDate() + 1);
         }
         onSuccess();
+      } else {
+        setError("Paiement non confirmé.");
+        setProcessing(false);
       }
     } catch (err) {
       setError("Erreur lors du traitement du paiement.");
@@ -173,6 +296,7 @@ function CheckoutForm({
       <h3 className="text-2xl font-semibold mb-6 text-center text-blue-700">
         Rentrez vos détails de paiement
       </h3>
+
       <label
         htmlFor="card-element"
         className="block mb-2 font-semibold text-gray-700"
@@ -223,10 +347,24 @@ function CheckoutForm({
       >
         {processing ? "Traitement en cours..." : `Payer ${total.toFixed(2)} €`}
       </button>
+
+      <p className="text-center text-sm text-gray-600 mt-4">
+        En confirmant votre paiement, vous acceptez nos{" "}
+        <a
+          href="https://drive.google.com/your-cgv-link"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline font-semibold"
+        >
+          conditions générales
+        </a>{" "}
+        relatives à la prestation de garderie à domicile.
+      </p>
     </form>
   );
 }
 
+/* ---------------------- Checkout principal ---------------------- */
 export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -234,20 +372,23 @@ export default function Checkout() {
     service: serviceData,
     selectedRange,
     quantity,
-    sizes,
+    sizes = [],
     details,
     arrivalTime,
     departureTime,
     isSterilized,
   } = location.state || {};
 
-
-    useEffect(() => {
+  useEffect(() => {
     console.log("ArrivalTime:", arrivalTime);
     console.log("DepartureTime:", departureTime);
   }, [arrivalTime, departureTime]);
 
-  const [contact, setContact] = useState({ name: "", email: "", phone: "" });
+  const [contact, setContact] = useState<ContactInfo>({
+    name: "",
+    email: "",
+    phone: "",
+  });
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
@@ -257,7 +398,7 @@ export default function Checkout() {
   const [success, setSuccess] = useState(false);
 
   const [datepickerRange, setDatepickerRange] = useState<Date[]>(
-    selectedRange || [new Date(), new Date()]
+    selectedRange || [new Date(), addDays(new Date(), 1)]
   );
 
   if (!serviceData || !selectedRange) {
@@ -268,25 +409,98 @@ export default function Checkout() {
     );
   }
 
-  const service = allServices.find((s) => s.id === serviceData.id)!;
-  const [start, end] = datepickerRange;
-  const days = Math.ceil(
-    (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  const rate =
-    service.type === "cat" ? 15 : sizes.includes("Gros chien") ? 30 : 25;
-  const total = days * rate * quantity;
+  // normalizamos service y serviceId a string para evitar errores de tipo
+  const service = allServices.find(
+    (s) => String(s.id) === String(serviceData.id)
+  ) as Service;
+  const serviceId = String(service?.id || serviceData.id) as ServiceType;
 
+  // Forzar single-day selection para FLASH pero usando useEffect (no en render)
+  useEffect(() => {
+    if (serviceId === "flash") {
+      const single = datepickerRange[0] || new Date();
+      // Solo set si difiere (evita loop)
+      if (
+        !datepickerRange[0] ||
+        datepickerRange[1]?.getTime() !== single.getTime() ||
+        datepickerRange[0].getTime() !== single.getTime()
+      ) {
+        setDatepickerRange([single, single]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceId]);
+
+  // leitura segura de start/end
+  const [start, end] = datepickerRange;
+
+  // Helper parseHour (acepta "HH" o "HH:MM")
+  const parseHour = (time?: string) => {
+    if (!time) return null;
+    const m = time.match(/^(\d{1,2})(?::(\d{2}))?$/);
+    if (!m) return null;
+    const h = parseInt(m[1], 10);
+    const min = m[2] ? parseInt(m[2], 10) : 0;
+    return h + min / 60;
+  };
+
+  const arrivalHour = parseHour(arrivalTime);
+  const departureHour = parseHour(departureTime);
+
+  // Determinar flags automáticos
+  // const isHalfDay =
+  //   serviceId === "flash" &&
+  //   (departureHour != null && arrivalHour != null
+  //     ? departureHour - arrivalHour <= 4
+  //     : true);
+  // const isLateDeparture =
+  //   serviceId !== "flash" &&
+  //   arrivalHour != null &&
+  //   departureHour != null &&
+  //   departureHour - arrivalHour > 2;
+
+  // Ejecutar cálculo centralizado
+  const calc = calculateBookingTotal({
+    serviceId,
+    datepickerRange: [start, end],
+    quantity: quantity ?? 1,
+    arrivalHour,
+    departureHour,
+    sizes,
+  });
+
+  const total = calc.total;
+  const days = calc.days;
+  // const rate = calc.rate;
+  const subtleMessage = calc.message;
+
+  // Mensajes UI
+  const flashMessage = (
+    <p className="mt-4 text-sm text-gray-700 italic text-center">
+      La demi-journée est limitée à 4 heures. Tout dépassement sera facturé
+      comme une journée complète. Le supplément devra être réglé sur place.
+    </p>
+  );
+
+  const felinSupplementMessage = (
+    <p className="mt-4 text-sm text-gray-700 italic text-center">
+      Un supplément de 10€ sera appliqué si le départ excède de deux heures
+      l'heure d’arrivée.
+    </p>
+  );
+
+  // Validación contacto
   const validateContact = () => {
     const errs: { name?: string; email?: string } = {};
-    if (!contact.name.trim()) errs.name = "Nom requis";
-    if (!/^\S+@\S+\.\S+$/.test(contact.email)) errs.email = "Email invalide";
+    if (!contact.name?.trim()) errs.name = "Nom requis";
+    if (!/^\S+@\S+\.\S+$/.test(contact.email || ""))
+      errs.email = "Email invalide";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const nextStep = () => {
-    if (step === 1 && !validateContact()) return; // Solo valida al avanzar del paso 1
+    if (step === 1 && !validateContact()) return;
     setStep((s) => Math.min(s + 1, 2));
   };
 
@@ -299,15 +513,17 @@ export default function Checkout() {
     setTimeout(() => {
       navigate("/success", {
         state: {
-          order: "dummy", // reemplaza con info real si quieres
+          order: "dummy",
           contact,
-          serviceId: service.id,
+          serviceId,
           dates: [start, end],
           bookingCount: days,
         },
       });
-    }, 2200);
+    }, 1200);
   };
+
+  const qty = Math.max(1, Math.floor(Number(quantity ?? 1)));
 
   return (
     <motion.div
@@ -327,29 +543,73 @@ export default function Checkout() {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -50, opacity: 0 }}
                 transition={{ duration: 0.3 }}
+                className="flex flex-col"
               >
-                <h2 className="text-3xl font-bold text-blue-700 mb-6 flex items-center gap-3">
-                  <CalendarIcon size={28} /> Choisissez vos dates
+                <h2 className="text-3xl font-bold text-blue-700 mb-6 flex items-center gap-3 text">
+                  <CalendarIcon size={28} /> Vos dates
                 </h2>
-                <Calendar
-                  selectRange
-                  onChange={(r) =>
-                    Array.isArray(r) &&
-                    r[0] instanceof Date &&
-                    r[1] instanceof Date &&
-                    setDatepickerRange([r[0], r[1]])
-                  }
-                  value={
-                    Array.isArray(datepickerRange) &&
-                    datepickerRange.length === 2
-                      ? [datepickerRange[0], datepickerRange[1]]
-                      : undefined
-                  }
-                  className="rounded-3xl shadow-md max-w-md mx-auto"
-                />
+
+                {serviceId === "flash" ? (
+                  <>
+<Calendar
+  onChange={(value) => {
+    if (!value) return;
+    const date = Array.isArray(value) ? value[0] : value;
+    if (date instanceof Date) {
+      setDatepickerRange([date, date]);
+    }
+  }}
+  value={datepickerRange[0]}
+  minDate={new Date()}
+  className="rounded-xl mx-auto shadow-lg"
+/>
+
+                    {flashMessage}
+                  </>
+                ) : (
+                  <>
+                    <DateRange
+                      ranges={[
+                        {
+                          startDate: datepickerRange?.[0] || new Date(),
+                          endDate:
+                            datepickerRange?.[1] || addDays(new Date(), 1),
+                          key: "selection",
+                        },
+                      ]}
+                      onChange={(item: any) => {
+                        const { startDate, endDate } = item.selection;
+                        if (startDate && endDate) {
+                          setDatepickerRange([startDate, endDate]);
+                        }
+                      }}
+                      minDate={new Date()}
+                      rangeColors={["#2563eb"]}
+                      moveRangeOnFirstSelection={false}
+                      showDateDisplay={false}
+                      direction="horizontal"
+                      months={1}
+                      className="rounded-xl mx-auto shadow-lg"
+                    />
+                    {serviceId === "felin" && felinSupplementMessage}
+                  </>
+                )}
+
                 <p className="mt-6 text-center text-gray-700 text-lg font-semibold">
-                  {start.toLocaleDateString("fr-FR")} →{" "}
-                  {end.toLocaleDateString("fr-FR")} ({days} nuits)
+                  {datepickerRange?.[0]?.toLocaleDateString("fr-FR")} →
+                  {datepickerRange?.[1]?.toLocaleDateString("fr-FR")} (
+                  {Math.max(
+                    1,
+                    Math.round(
+                      (datepickerRange?.[1]?.getTime() -
+                        datepickerRange?.[0]?.getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    )
+                  )}{" "}
+                  {service.title === "FORMULE FLASH" || serviceId === "flash"
+                    ? "journée(s)"
+                    : "nuit(s)"}
+                  )
                 </p>
 
                 <div className="flex justify-end mt-8 max-w-md mx-auto">
@@ -414,6 +674,7 @@ export default function Checkout() {
                       </p>
                     )}
                   </div>
+
                   <div>
                     <label
                       htmlFor="email"
@@ -446,6 +707,7 @@ export default function Checkout() {
                       </p>
                     )}
                   </div>
+
                   <div>
                     <label
                       htmlFor="phone"
@@ -478,6 +740,7 @@ export default function Checkout() {
                       </p>
                     )}
                   </div>
+
                   <div className="flex justify-between mt-8 max-w-md mx-auto">
                     <button
                       type="button"
@@ -514,11 +777,11 @@ export default function Checkout() {
                   <p>
                     <strong>Service :</strong>{" "}
                     <span className="text-blue-700 lowercase">
-                      {service.title}
+                      {service?.title}
                     </span>
                   </p>
                   <p>
-                    <strong>Quantité :</strong> {quantity}
+                    <strong>Quantité :</strong> {qty}
                   </p>
                   <p>
                     <strong>Taille :</strong> {sizes.join(", ")}
@@ -527,6 +790,11 @@ export default function Checkout() {
                     Total :{" "}
                     <span className="text-green-600">{total.toFixed(2)} €</span>
                   </p>
+                  {subtleMessage && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      {subtleMessage}
+                    </p>
+                  )}
                 </div>
 
                 <Elements stripe={stripePromise}>
@@ -535,7 +803,7 @@ export default function Checkout() {
                     start={start}
                     end={end}
                     service={service}
-                    quantity={quantity}
+                    quantity={qty}
                     sizes={sizes}
                     details={details}
                     contact={contact}
@@ -566,40 +834,61 @@ export default function Checkout() {
         >
           <h3 className="text-3xl font-extrabold mb-6">Résumé</h3>
           <div className="space-y-4 text-lg font-medium">
-            <p>
-              <strong>Dates:</strong> <br />
-              {start.toLocaleDateString("fr-FR")} →{" "}
-              {end.toLocaleDateString("fr-FR")}
-              <br />
-              <small className="text-gray-600 font-normal">
-                ({days} nuits)
-              </small>
-            </p>
+<p>
+  <strong>Dates :</strong> <br />
+  {(service.title === "FORMULE FLASH" || serviceId === "flash") ? (
+    // Caso FORMULE FLASH: una sola fecha
+    <>
+      {start.toLocaleDateString("fr-FR")}
+      <br />
+      <small className="text-gray-600 font-normal">
+        (1 journée)
+      </small>
+    </>
+  ) : (
+    // Caso normal: rango de fechas
+    <>
+      {start.toLocaleDateString("fr-FR")} → {end.toLocaleDateString("fr-FR")}
+      <br />
+      <small className="text-gray-600 font-normal">
+        ({days} {days > 1 ? "nuits" : "nuit"})
+      </small>
+    </>
+  )}
+</p>
+
+
             <p>
               <strong>Heure d’arrivée :</strong> <br />
-              {arrivalTime}
+              {arrivalTime || "—"}
             </p>
             <p>
               <strong>Heure de départ :</strong> <br />
-              {departureTime}
+              {departureTime || "—"}
             </p>
+
             <p>
               <strong>Stérilisée :</strong> <br />
-              {isSterilized}
+              {isSterilized ? "Oui" : "Non"}
             </p>
+
             <p>
               <strong>Service:</strong> <br />
-              {service.title}
+              {service?.title}
             </p>
+
             <p>
               <strong>Quantité:</strong> <br />
-              {quantity}
+              {qty}
             </p>
+
             <p>
               <strong>Taille:</strong> <br />
               {sizes.join(", ")}
             </p>
+
             <hr className="my-4 border-blue-300" />
+
             <p className="text-2xl font-bold">
               Total:{" "}
               <span className="text-green-600">{total.toFixed(2)} €</span>
