@@ -2,12 +2,11 @@ import { useEffect, useState } from "react";
 import ReviewCard, { Review } from "./ReviewCard";
 import { db } from "../lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import { ChevronDown, ChevronUp } from "lucide-react"; // puedes usar íconos de Lucide o cualquier otro
+import { ChevronDown } from "lucide-react";
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAll, setShowAll] = useState(false); // 👈 Nuevo estado
 
   useEffect(() => {
     async function loadAllReviews() {
@@ -61,7 +60,7 @@ export default function ReviewsPage() {
   if (loading) return <p>Chargement...</p>;
   if (reviews.length === 0) return <p>Aucun avis trouvé.</p>;
 
-  const reviewsToShow = showAll ? reviews : reviews.slice(0, 3); // 👈 mostrar 3 o todos
+  const reviewsToShow = reviews.slice(0, 3);
 
   return (
     <div className="mt-10">
@@ -74,23 +73,15 @@ export default function ReviewsPage() {
         ))}
       </div>
 
-      {/* Botón para ver más o menos */}
+      {/* Botón para ver más */}
       {reviews.length > 3 && (
         <div className="flex justify-center mt-6">
-          <button
-            onClick={() => setShowAll(!showAll)}
+          <a
+            href="/avis"
             className="flex items-center text-blue-600 hover:underline"
           >
-            {showAll ? (
-              <>
-                Voir moins <ChevronUp className="ml-2 h-4 w-4" />
-              </>
-            ) : (
-              <>
-                Voir plus <ChevronDown className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </button>
+            Voir plus <ChevronDown className="ml-2 h-4 w-4" />
+          </a>
         </div>
       )}
     </div>

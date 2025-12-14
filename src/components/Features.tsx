@@ -19,7 +19,7 @@ const Features: React.FC = () => {
           },
           {
             emoji: "🏞️",
-            title: "Au minimum 3 longues promenades",
+            title: "Au minimum 3 promenades par jour",
             desc: "dans de grands espaces verts au pied de notre immeuble",
           },
           {

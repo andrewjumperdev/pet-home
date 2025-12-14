@@ -19,6 +19,7 @@ import { ScrollToTop } from './components/ScrollToTop';
 import Success from './pages/Success';
 import Reviews from './pages/Reviews';
 import StorePage from './store/store';
+import ConditionsPage from './pages/Conditions-generales';
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -63,6 +64,7 @@ const App: React.FC = () => {
             <Route path="/admin-register" element={<AdminRegister />} />
             <Route path="/success" element={ <Success/> } />
             <Route path="/store" element={<StorePage />} />
+            <Route path="/cgv" element={<ConditionsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

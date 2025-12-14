@@ -90,14 +90,10 @@ export function calculateBookingTotal({
 
   switch (normalizedId) {
     case "1": {
-      // FLASH: si duración <= 4h -> 12€ (demi), sino 20€
-      const duration = lateBy(arrivalHour ?? null, departureHour ?? null) || 4;
-      console.log("Flash duration:", duration);
-      const isHalf = duration <= 4;
-      rate = isHalf ? 12 : 20;
+      // FLASH: 20€ por día
+      rate = 20;
       total = rate * qty;
-      message =
-        "La demi-journée est limitée à 4 heures. Tout dépassement sera facturé comme une journée complète. Le supplément devra être réglé sur place.";
+      message = "";
       break;
     }
 
@@ -607,7 +603,7 @@ export default function Checkout() {
                     )
                   )}{" "}
                   {service.title === "FORMULE FLASH" || serviceId === "flash"
-                    ? "journée(s)"
+                    ? "journée"
                     : "nuit(s)"}
                   )
                 </p>

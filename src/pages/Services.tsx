@@ -16,7 +16,6 @@ import dogLargeGif from "/images/dog_large.gif";
 import catGif from "/images/cat.gif";
 import CustomButton from "../components/CustomButton";
 import { Helmet } from "react-helmet";
-import ReviewForm from "../components/ReviewForm";
 import AnimatedOfferBanner from "../components/AnimatedOfferBanner";
 
 export interface Service {
@@ -36,7 +35,7 @@ export const services: Service[] = [
     title: "FORMULE FLASH",
     subtitle: "Journée",
     description: "Parfait pour des escapades courtes",
-    rates: ["20€/jour (4h à 9h)", "12€ la demi-journée (1h à 4h)", "2 chiens: -10% sur le 2ème"],
+    rates: ["20€/jour", "- 15% pour le 2ème"],
     icon: <DogIcon className="h-10 w-10 text-yellow-500" />,
     type: "dog",
   },
@@ -45,7 +44,7 @@ export const services: Service[] = [
     title: "FORMULE SÉJOUR",
     subtitle: "1 nuit et plus",
     description: "Idéal pour les vacances",
-    rates: ["23€/nuit (jusqu’à 40kg max)", "2 chiens: -15% sur le 2ème chien"],
+    rates: ["23€/nuit (jusqu'à 40kg max)", "- 15% pour le 2ème"],
     icon: <PawPrint className="h-10 w-10 text-pink-500" />,
     type: "dog",
   },
@@ -54,7 +53,7 @@ export const services: Service[] = [
     title: "FORMULE FÉLIN",
     subtitle: "Journée ou nuit",
     description: "Confort et câlins garantis",
-    rates: ["19€/nuit", "2 chats: -10% sur le 2ème chat"],
+    rates: ["19€/nuit", "- 10% pour le 2ème"],
     icon: <CatIcon className="h-10 w-10 text-purple-500" />,
     type: "cat",
   },
@@ -116,7 +115,7 @@ export default function Services() {
                 </p>
                 <ul className="list-disc list-inside text-gray-700 space-y-1 text-sm">
                 {(service.rates || []).map((rate, i) => (
-                  <i key={i}>{rate}</i>
+                  <li key={i}>{rate}</li>
                 ))}
                 </ul>
               </div>
@@ -143,9 +142,6 @@ export default function Services() {
             Ils nous ont fait confiance
           </h3>
           <ReviewsPage />
-          <div className="mt-12" id="avis">
-            <ReviewForm />
-          </div>
         </div>
       </div>
     </section>
@@ -181,6 +177,7 @@ function BookingModal({
   const [arrivalTime, setArrivalTime] = useState("");
   const [departureTime, setDepartureTime] = useState("");
   const [isSterilized, setIsSterilized] = useState<string>("");
+  const [acceptCGV, setAcceptCGV] = useState<boolean>(false);
 
   useEffect(() => {
     async function fetchBooked() {
@@ -235,7 +232,8 @@ function BookingModal({
       largeCount > 1 ||
       !arrivalTime ||
       !departureTime ||
-      isSterilized === ""
+      isSterilized === "" ||
+      !acceptCGV
     ) {
       setTouched(Array(quantity).fill(true));
       return;
@@ -256,14 +254,6 @@ function BookingModal({
     onClose();
   };
 
-  const needsExtraCharge = () => {
-    if (!arrivalTime || !departureTime) return false;
-    const [ah, am] = arrivalTime.split(":").map(Number);
-    const [dh, dm] = departureTime.split(":").map(Number);
-    const totalArrival = ah * 60 + am;
-    const totalDeparture = dh * 60 + dm;
-    return totalDeparture - totalArrival > 120;
-  };
 
   return (
     <motion.div
@@ -339,7 +329,7 @@ function BookingModal({
                   (selectedRange[1].getTime() - selectedRange[0].getTime()) /
                     (1000 * 60 * 60 * 24)
                 )}{" "}
-                nuits
+                nuit(s)
               </p>
             )}
 
@@ -382,12 +372,6 @@ function BookingModal({
               </div>
             </div>
 
-            {needsExtraCharge() && (
-              <p className="text-red-600 text-sm mt-3 font-medium">
-                Un supplément de <strong>12€</strong> sera appliqué si le départ
-                excède de deux heures l'heure d’arrivée.
-              </p>
-            )}
 
             <button
               onClick={() => setStep(2)}
@@ -460,7 +444,7 @@ function BookingModal({
 
                 <div className="mb-6">
                   <label className="block text-lg font-semibold text-gray-700 mb-2">
-                    Castré / Stérilisé
+                    Castré / Stérilisée
                   </label>
                   <select
                     value={isSterilized}
@@ -567,6 +551,36 @@ function BookingModal({
                 </div>
               </div>
             ))}
+
+            {/* Checkbox CGV */}
+            <div className="mt-6 mb-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={acceptCGV}
+                  onChange={(e) => setAcceptCGV(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">
+                  J'accepte les{" "}
+                  <a
+                    href="/cgv"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline hover:text-blue-800"
+                  >
+                    Conditions Générales de Vente
+                  </a>
+                  {" "}*
+                </span>
+              </label>
+              {!acceptCGV && touched[0] && (
+                <p className="text-red-600 text-xs mt-1">
+                  Vous devez accepter les CGV pour continuer
+                </p>
+              )}
+            </div>
+
             <button
               type="submit"
               className="w-full py-3 rounded bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white"
