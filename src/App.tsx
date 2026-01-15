@@ -21,6 +21,11 @@ import Reviews from './pages/Reviews';
 import StorePage from './store/store';
 import ConditionsPage from './pages/Conditions-generales';
 
+// Store pages (Printful)
+import ProductDetail from './components/merch/ProductDetail';
+import StoreCheckout from './pages/MerchCheckout';
+import StoreSuccess from './pages/MerchSuccess';
+
 const App: React.FC = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -63,7 +68,12 @@ const App: React.FC = () => {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/admin-register" element={<AdminRegister />} />
             <Route path="/success" element={ <Success/> } />
+            {/* Store routes (Printful) */}
             <Route path="/store" element={<StorePage />} />
+            <Route path="/store/:id" element={<ProductDetail />} />
+            <Route path="/store/checkout" element={<StoreCheckout />} />
+            <Route path="/store/success" element={<StoreSuccess />} />
+
             <Route path="/cgv" element={<ConditionsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

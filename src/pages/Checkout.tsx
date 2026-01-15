@@ -214,21 +214,12 @@ function CheckoutForm({
     setError(null);
 
     try {
+      // Crear SetupIntent para guardar el método de pago sin cobrar
       const { data } = await axios.post(
-        "https://api.maisonpourpets.com/create-payment-intent",
+        "https://api.maisonpourpets.com/create-setup-intent",
         {
-          amount: Math.round(total * 100),
           client_name: contact.name,
           client_email: contact.email,
-          service: service.title,
-          quantity,
-          sizes,
-          details,
-          start_date: start.toISOString(),
-          end_date: end.toISOString(),
-          arrival_time: arrivalTime,
-          departure_time: departureTime,
-          isSterilized,
         }
       );
 
@@ -239,7 +230,8 @@ function CheckoutForm({
         return;
       }
 
-      const paymentResult = await stripe.confirmCardPayment(data.clientSecret, {
+      // Confirmar SetupIntent para guardar el payment method
+      const setupResult = await stripe.confirmCardSetup(data.clientSecret, {
         payment_method: {
           card: cardElement,
           billing_details: {
@@ -249,13 +241,16 @@ function CheckoutForm({
         },
       });
 
-      if (paymentResult.error) {
-        setError(paymentResult.error.message ?? "Erreur de paiement.");
+      if (setupResult.error) {
+        setError(setupResult.error.message ?? "Erreur lors de l'enregistrement de la carte.");
         setProcessing(false);
         return;
       }
 
-      if (paymentResult.paymentIntent?.status === "succeeded") {
+      if (setupResult.setupIntent?.status === "succeeded") {
+        // Guardar reserva con el payment_method_id (NO se ha cobrado aún)
+        const paymentMethodId = setupResult.setupIntent.payment_method as string;
+
         let curr = new Date(start);
         const endDate = new Date(end);
         while (curr <= endDate) {
@@ -266,18 +261,25 @@ function CheckoutForm({
             sizes,
             details,
             contact,
-            paymentId: paymentResult.paymentIntent.id,
+            paymentMethodId: paymentMethodId, // ID del método de pago guardado
+            paymentId: null, // Aún no hay pago confirmado
+            paymentStatus: 'pending', // Estado del pago
             createdAt: new Date().toISOString(),
+            status: 'pending',
+            total: total,
+            arrivalTime: arrivalTime || '',
+            departureTime: departureTime || '',
+            isSterilized: isSterilized || false,
           });
           curr.setDate(curr.getDate() + 1);
         }
         onSuccess();
       } else {
-        setError("Paiement non confirmé.");
+        setError("Échec de l'enregistrement du mode de paiement.");
         setProcessing(false);
       }
     } catch (err) {
-      setError("Erreur lors du traitement du paiement.");
+      setError("Erreur lors du traitement.");
       console.error(err);
       setProcessing(false);
     }
@@ -341,8 +343,12 @@ function CheckoutForm({
         }`}
         aria-busy={processing}
       >
-        {processing ? "Traitement en cours..." : `Payer ${total.toFixed(2)} €`}
+        {processing ? "Traitement en cours..." : `Confirmer la réservation`}
       </button>
+
+      <p className="text-center text-xs text-gray-600 mt-2">
+        <strong>Note:</strong> Votre carte ne sera débitée que lorsque l'administrateur confirmera votre réservation.
+      </p>
 
       <p className="text-center text-sm text-gray-600 mt-4">
         En confirmant votre paiement, vous acceptez nos{" "}

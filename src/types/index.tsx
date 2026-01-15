@@ -44,3 +44,33 @@ export type ValidationErrors = {
   breed: boolean;
   age: boolean;
 };
+
+export type BookingStatus = "pending" | "confirmed" | "rejected" | "cancelled";
+
+export type Booking = {
+  id: string;
+  createdAt: string;
+  date: string;
+  contact: { name: string; email: string; phone?: string };
+  details: Array<{ name: string; age: string; breed: string }>;
+  sizes: string[];
+  quantity: number;
+  serviceId: number | string;
+  paymentId: string | null; // Puede ser null si aún no se ha cobrado
+  paymentMethodId?: string; // ID del método de pago guardado
+  paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded'; // Estado del pago
+  status: BookingStatus;
+  total: number;
+  arrivalTime?: string;
+  departureTime?: string;
+  isSterilized?: boolean;
+  rejectionReason?: string;
+  confirmedAt?: string;
+  rejectedAt?: string;
+};
+
+export type AvailabilityConfig = {
+  maxCapacity: number;
+  currentBookings: number;
+  date: string;
+};

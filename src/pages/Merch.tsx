@@ -1,5 +1,6 @@
 /**
- * Página principal de la tienda - E-commerce con Printful
+ * Página principal de merchandising
+ * Catálogo de productos con Printful
  */
 
 import { motion } from 'framer-motion';
@@ -13,11 +14,11 @@ import {
   Shield,
   RotateCcw,
 } from 'lucide-react';
-import { usePrintfulStore } from './printfulStore';
+import { usePrintfulStore } from '../store/printfulStore';
 import ProductGrid from '../components/merch/ProductGrid';
 import CartDrawer from '../components/merch/CartDrawer';
 
-export default function StorePage() {
+export default function Merch() {
   const { searchQuery, setSearchQuery, getCartItemCount, openCart } = usePrintfulStore();
   const cartItemCount = getCartItemCount();
 
@@ -50,9 +51,9 @@ export default function StorePage() {
               transition={{ delay: 0.1 }}
               className="text-4xl md:text-6xl font-bold text-white mb-6"
             >
-              Tienda{' '}
+              Merch para{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-400">
-                PetHome
+                Pet Lovers
               </span>
             </motion.h1>
 

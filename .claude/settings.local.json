@@ -4,7 +4,13 @@
       "Bash(dir:*)",
       "Bash(find:*)",
       "Bash(cat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 5 node:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(timeout:*)"
     ]
   }
 }
