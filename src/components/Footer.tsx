@@ -37,7 +37,7 @@ const Footer: React.FC = () => {
             <span className="font-oregano oregano-regular-italic text-xl">PetHome</span>
           </div>
           <p className="max-w-xs mx-auto sm:mx-0">
-            PetHome, LA maison de vacances adoptée par vos chiens et chats.
+            PetHome, La maison de vacances adoptée par vos chiens et chats.
           </p>
         </div>
       </div>

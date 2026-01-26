@@ -17,6 +17,7 @@ import {
   Info,
   User,
   CheckCircle2,
+  Tag,
 } from "lucide-react";
 import { db } from "../lib/firebase";
 import { addDoc, collection } from "firebase/firestore";
@@ -40,31 +41,97 @@ interface ContactInfo {
   phone?: string;
 }
 
-/* ---------------------- Util: cálculo profesional ---------------------- */
+/* ---------------------- CONSTANTES DE TARIFAS ---------------------- */
+const PRICES = {
+  // Perro
+  DOG_FLASH: 20, // Jornada diurna completa
+  DOG_HALF_FLASH: 10, // Media jornada (≤4h)
+  DOG_NIGHT: 23, // Por noche
+
+  // Gato
+  CAT_NIGHT: 19, // Por noche
+  CAT_HALF_NIGHT: 9.5, // Media noche (extra ≤6h)
+};
+
+/* ---------------------- CODES PROMO ---------------------- */
+const PROMO_CODES: Record<
+  string,
+  { discount: number; label: string; description: string }
+> = {
+  BIENVENUE10: {
+    discount: 0.1,
+    label: "1ère réservation (-10%)",
+    description: "10% de réduction sur votre première réservation",
+  },
+  FIDELE10: {
+    discount: 0.1,
+    label: "5ème réservation (-10%)",
+    description: "10% de réduction pour votre fidélité",
+  },
+};
+
+/* ---------------------- Types para el cálculo ---------------------- */
 interface BookingCalculationParams {
   serviceId: ServiceType;
   datepickerRange: [Date, Date];
   quantity: number;
-  arrivalHour?: number | null;
-  departureHour?: number | null;
+  arrivalHour?: number | null; // Hora decimal (ej: 9.5 = 09:30)
+  departureHour?: number | null; // Hora decimal (ej: 17.5 = 17:30)
   sizes?: string[];
 }
 
-function daysInclusive(startDate: Date, endDate: Date) {
+interface PricingBreakdown {
+  nuits: number;
+  flash: number;
+  demiFlash: number;
+  demiNuitChat: number;
+  lines: { label: string; amount: number }[];
+}
+
+interface CalculationResult {
+  total: number;
+  days: number; // días naturales entre fechas
+  nights: number; // noches base
+  rate: number; // tarifa base unitaria
+  message: string; // mensaje informativo
+  breakdown: PricingBreakdown;
+}
+
+/* ---------------------- Util: diferencia en días ---------------------- */
+function daysDifference(startDate: Date, endDate: Date): number {
   const msPerDay = 24 * 60 * 60 * 1000;
   const sUTC = Date.UTC(
     startDate.getFullYear(),
     startDate.getMonth(),
-    startDate.getDate()
+    startDate.getDate(),
   );
   const eUTC = Date.UTC(
     endDate.getFullYear(),
     endDate.getMonth(),
-    endDate.getDate()
+    endDate.getDate(),
   );
-  return Math.floor((eUTC - sUTC) / msPerDay) + 1;
+  return Math.floor((eUTC - sUTC) / msPerDay);
 }
 
+/* ---------------------- LÓGICA PRINCIPAL DE TARIFICACIÓN ---------------------- */
+/**
+ * Sistema de tarificación PetHome - Sin zonas grises
+ *
+ * REGLAS DE NEGOCIO:
+ *
+ * 1. FLASH vs SÉJOUR (perro):
+ *    - Si NO cruza medianoche (mismo día) y salida ≤ 21:00 → FLASH
+ *    - Si cruza medianoche (sale otro día) → SÉJOUR
+ *    - Si salida > 21:00 → noche extra (ya es turno nocturno)
+ *
+ * 2. Una "noche" cubre hasta la misma hora de llegada del día de salida
+ *    Ejemplo: Lun 09:00 → Vie 09:00 = 4 noches
+ *
+ * 3. Rubros por horas:
+ *    FLASH (mismo día): ≤4h = 10€ | >4h hasta 21:00 = 20€ | >21:00 = 23€ (noche)
+ *    SÉJOUR extra: ≤4h = +10€ | >4h ≤12h = +20€ | >12h = +1 noche | >21:00 = +1 noche
+ *    GATO extra: ≤6h = +9.50€ | >6h o >21:00 = +1 noche
+ */
 export function calculateBookingTotal({
   serviceId,
   datepickerRange,
@@ -72,72 +139,246 @@ export function calculateBookingTotal({
   arrivalHour,
   departureHour,
   sizes = [],
-}: BookingCalculationParams) {
+}: BookingCalculationParams): CalculationResult {
   const [start, end] = datepickerRange;
-  const days = Math.max(1, daysInclusive(start, end));
+  const nightsBase = Math.max(0, daysDifference(start, end));
   const qty = Math.max(1, Math.floor(quantity || 1));
 
-  // helpers
-  const lateBy = (a?: number | null, d?: number | null) =>
-    a != null && d != null ? Math.max(0, d - a) : 0;
+  const normalizedId = String(serviceId).toLowerCase();
+  const isFlash = normalizedId === "1" || normalizedId === "flash";
+  const isSejour = normalizedId === "2" || normalizedId === "sejour";
+  const isCat =
+    normalizedId === "felin" || normalizedId === "3" || normalizedId === "cat";
+
+  // Valores por defecto si no hay horas
+  const arrival = arrivalHour ?? 9; // Default: 09:00
+  const departure = departureHour ?? (isFlash ? 18 : 9); // Flash: 18:00, Séjour: 09:00
+
+  const breakdown: PricingBreakdown = {
+    nuits: 0,
+    flash: 0,
+    demiFlash: 0,
+    demiNuitChat: 0,
+    lines: [],
+  };
 
   let total = 0;
-  let rate = 0;
   let message = "";
 
-  const normalizedId = String(serviceId) as ServiceType;
-  console.log("Calculating total for serviceId:", normalizedId);
+  // ========== PERRO - FORMULE FLASH (mismo día, sin noche) ==========
+  if (isFlash) {
+    const duration = departure - arrival;
 
-  switch (normalizedId) {
-    case "1": {
-      // FLASH: 20€ por día
-      rate = 20;
-      total = rate * qty;
-      message = "";
-      break;
+    if (departure > 21) {
+      // Salida después de las 21:00 → se convierte en noche
+      breakdown.nuits = 1;
+      total = PRICES.DOG_NIGHT * qty;
+      breakdown.lines.push({
+        label: `${qty} nuit${qty > 1 ? "s" : ""} (départ après 21h)`,
+        amount: total,
+      });
+      message = "Départ après 21h : facturé comme une nuit.";
+    } else if (duration <= 4) {
+      // ≤4 horas → media jornada
+      breakdown.demiFlash = 1;
+      total = PRICES.DOG_HALF_FLASH * qty;
+      breakdown.lines.push({
+        label: `${qty} demi-journée${qty > 1 ? "s" : ""} (≤4h)`,
+        amount: total,
+      });
+      message = "Demi-journée : garde de 4 heures maximum.";
+    } else {
+      // >4 horas → jornada completa
+      breakdown.flash = 1;
+      total = PRICES.DOG_FLASH * qty;
+      breakdown.lines.push({
+        label: `${qty} journée${qty > 1 ? "s" : ""} complète${qty > 1 ? "s" : ""}`,
+        amount: total,
+      });
     }
 
-    case "2": {
-      // SÉJOUR: 23€/noche; 10% sobre el 2º perro; +12€ si salida tardía (>2h)
-      rate = 23;
-      total = rate * days * qty;
-
-      // Descuento 10% sobre el 2º perro: se descuenta 10% del importe equivalente a 1 perro por días
-      if (qty >= 2) {
-        const discountForSecondDog = rate * days * 0.1;
-        total -= discountForSecondDog;
-      }
-
-      if (lateBy(arrivalHour ?? null, departureHour ?? null) > 2) {
-        total += 12;
-      }
-      break;
-    }
-
-    case "felin": {
-      // FÉLIN: 19€/noche; suplemento +10€ si salida tardía (>2h)
-      rate = 19;
-      total = rate * days * qty;
-      if (lateBy(arrivalHour ?? null, departureHour ?? null) > 2) {
-        total += 10;
-      }
-      message =
-        "Un supplément de 10€ sera appliqué si le départ excède de deux heures l'heure d’arrivée.";
-      break;
-    }
-
-    default: {
-      rate = sizes.includes("Gros chien") ? 30 : 23;
-      total = rate * days * qty;
-      break;
-    }
+    return {
+      total: Number(total.toFixed(2)),
+      days: 1,
+      nights: breakdown.nuits,
+      rate: isFlash ? PRICES.DOG_FLASH : PRICES.DOG_NIGHT,
+      message,
+      breakdown,
+    };
   }
+
+  // ========== PERRO - FORMULE SÉJOUR (1+ noches) ==========
+  if (isSejour) {
+    // Paso 1: Noches base
+    breakdown.nuits = nightsBase;
+    const nightsTotal = PRICES.DOG_NIGHT * nightsBase * qty;
+
+    if (nightsBase > 0) {
+      breakdown.lines.push({
+        label: `${nightsBase} nuit${nightsBase > 1 ? "s" : ""} × ${qty} chien${qty > 1 ? "s" : ""} @ ${PRICES.DOG_NIGHT}€`,
+        amount: nightsTotal,
+      });
+    }
+
+    total = nightsTotal;
+
+    // Paso 2: Calcular extra en el día de salida
+    // checkout_ref = hora de llegada del día de salida
+    const extraHours = departure - arrival;
+
+    if (extraHours > 0) {
+      // Prioridad 1: Salida > 21:00 → +1 noche
+      if (departure > 21) {
+        breakdown.nuits += 1;
+        const extraNight = PRICES.DOG_NIGHT * qty;
+        total += extraNight;
+        breakdown.lines.push({
+          label: `+1 nuit (départ après 21h)`,
+          amount: extraNight,
+        });
+        message = "Nuit supplémentaire ajoutée : départ après 21h.";
+      }
+      // Prioridad 2: Extra > 12h → +1 noche
+      else if (extraHours > 12) {
+        breakdown.nuits += 1;
+        const extraNight = PRICES.DOG_NIGHT * qty;
+        total += extraNight;
+        breakdown.lines.push({
+          label: `+1 nuit (prolongation > 12h)`,
+          amount: extraNight,
+        });
+        message =
+          "Prolongation de plus de 12h : facturée comme nuit supplémentaire.";
+      }
+      // >4h ≤12h → +1 FLASH
+      else if (extraHours > 4) {
+        breakdown.flash = 1;
+        const flashExtra = PRICES.DOG_FLASH * qty;
+        total += flashExtra;
+        breakdown.lines.push({
+          label: `+1 journée supplémentaire (prolongation ${Math.round(extraHours)}h)`,
+          amount: flashExtra,
+        });
+        message = "Prolongation facturée comme journée supplémentaire.";
+      }
+      // ≤4h → +½ FLASH
+      else if (extraHours > 0) {
+        breakdown.demiFlash = 1;
+        const halfFlashExtra = PRICES.DOG_HALF_FLASH * qty;
+        total += halfFlashExtra;
+        breakdown.lines.push({
+          label: `+½ journée (prolongation ${Math.round(extraHours)}h)`,
+          amount: halfFlashExtra,
+        });
+        message = "Prolongation facturée comme demi-journée.";
+      }
+    }
+
+    // Descuento 10% para 2º perro
+    if (qty >= 2) {
+      const discount = PRICES.DOG_NIGHT * nightsBase * 0.1;
+      total -= discount;
+      breakdown.lines.push({
+        label: `Réduction 2ème chien (-10%)`,
+        amount: -discount,
+      });
+    }
+
+    return {
+      total: Number(total.toFixed(2)),
+      days: nightsBase + 1,
+      nights: breakdown.nuits,
+      rate: PRICES.DOG_NIGHT,
+      message,
+      breakdown,
+    };
+  }
+
+  // ========== GATO - SÉJOUR (solo noches, sin Flash) ==========
+  if (isCat) {
+    // Noches base
+    breakdown.nuits = nightsBase;
+    const nightsTotal = PRICES.CAT_NIGHT * nightsBase * qty;
+
+    if (nightsBase > 0) {
+      breakdown.lines.push({
+        label: `${nightsBase} nuit${nightsBase > 1 ? "s" : ""} × ${qty} chat${qty > 1 ? "s" : ""} @ ${PRICES.CAT_NIGHT}€`,
+        amount: nightsTotal,
+      });
+    }
+
+    total = nightsTotal;
+
+    // Extra en el día de salida
+    const extraHours = departure - arrival;
+
+    if (extraHours > 0) {
+      // >21:00 → +1 noche
+      if (departure > 21) {
+        breakdown.nuits += 1;
+        const extraNight = PRICES.CAT_NIGHT * qty;
+        total += extraNight;
+        breakdown.lines.push({
+          label: `+1 nuit (départ après 21h)`,
+          amount: extraNight,
+        });
+        message = "Nuit supplémentaire : départ après 21h.";
+      }
+      // >6h → +1 noche
+      else if (extraHours > 6) {
+        breakdown.nuits += 1;
+        const extraNight = PRICES.CAT_NIGHT * qty;
+        total += extraNight;
+        breakdown.lines.push({
+          label: `+1 nuit (prolongation > 6h)`,
+          amount: extraNight,
+        });
+        message =
+          "Prolongation de plus de 6h : facturée comme nuit supplémentaire.";
+      }
+      // ≤6h → +½ noche
+      else {
+        breakdown.demiNuitChat = 1;
+        const halfNight = PRICES.CAT_HALF_NIGHT * qty;
+        total += halfNight;
+        breakdown.lines.push({
+          label: `+½ nuit (prolongation ${Math.round(extraHours)}h)`,
+          amount: halfNight,
+        });
+        message = "Prolongation facturée comme demi-nuit.";
+      }
+    }
+
+    // Redondear hacia arriba al euro más cercano para gatos
+    total = Math.ceil(total);
+
+    return {
+      total: Number(total.toFixed(2)),
+      days: nightsBase + 1,
+      nights: breakdown.nuits,
+      rate: PRICES.CAT_NIGHT,
+      message,
+      breakdown,
+    };
+  }
+
+  // ========== FALLBACK (servicio no reconocido) ==========
+  const rate = sizes.includes("Gros chien") ? 30 : PRICES.DOG_NIGHT;
+  const days = Math.max(1, nightsBase + 1);
+  total = rate * days * qty;
+
+  breakdown.lines.push({
+    label: `${days} jour${days > 1 ? "s" : ""} @ ${rate}€`,
+    amount: total,
+  });
 
   return {
     total: Number(total.toFixed(2)),
     days,
+    nights: nightsBase,
     rate,
-    message,
+    message: "",
+    breakdown,
   };
 }
 
@@ -220,7 +461,7 @@ function CheckoutForm({
         {
           client_name: contact.name,
           client_email: contact.email,
-        }
+        },
       );
 
       const cardElement = elements.getElement(CardElement);
@@ -242,14 +483,18 @@ function CheckoutForm({
       });
 
       if (setupResult.error) {
-        setError(setupResult.error.message ?? "Erreur lors de l'enregistrement de la carte.");
+        setError(
+          setupResult.error.message ??
+            "Erreur lors de l'enregistrement de la carte.",
+        );
         setProcessing(false);
         return;
       }
 
       if (setupResult.setupIntent?.status === "succeeded") {
         // Guardar reserva con el payment_method_id (NO se ha cobrado aún)
-        const paymentMethodId = setupResult.setupIntent.payment_method as string;
+        const paymentMethodId = setupResult.setupIntent
+          .payment_method as string;
 
         let curr = new Date(start);
         const endDate = new Date(end);
@@ -263,12 +508,12 @@ function CheckoutForm({
             contact,
             paymentMethodId: paymentMethodId, // ID del método de pago guardado
             paymentId: null, // Aún no hay pago confirmado
-            paymentStatus: 'pending', // Estado del pago
+            paymentStatus: "pending", // Estado del pago
             createdAt: new Date().toISOString(),
-            status: 'pending',
+            status: "pending",
             total: total,
-            arrivalTime: arrivalTime || '',
-            departureTime: departureTime || '',
+            arrivalTime: arrivalTime || "",
+            departureTime: departureTime || "",
             isSterilized: isSterilized || false,
           });
           curr.setDate(curr.getDate() + 1);
@@ -347,13 +592,14 @@ function CheckoutForm({
       </button>
 
       <p className="text-center text-xs text-gray-600 mt-2">
-        <strong>Note:</strong> Votre carte ne sera débitée que lorsque l'administrateur confirmera votre réservation.
+        <strong>Note:</strong> Votre carte ne sera débitée que lorsque
+        l'administrateur confirmera votre réservation.
       </p>
 
       <p className="text-center text-sm text-gray-600 mt-4">
         En confirmant votre paiement, vous acceptez nos{" "}
         <a
-          href="https://drive.google.com/your-cgv-link"
+          href="https://docs.google.com/document/d/e/2PACX-1vTWOtjmOqED2_IgIzI1nCXZv-G6eBlaIVaneIDZx0Ko4O1p56STTMDqUcuQs_d26JzlcNF6igfpP7_4/pub"
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 hover:underline font-semibold"
@@ -381,11 +627,6 @@ export default function Checkout() {
     isSterilized,
   } = location.state || {};
 
-  useEffect(() => {
-    console.log("ArrivalTime:", arrivalTime);
-    console.log("DepartureTime:", departureTime);
-  }, [arrivalTime, departureTime]);
-
   const [contact, setContact] = useState<ContactInfo>({
     name: "",
     email: "",
@@ -399,8 +640,34 @@ export default function Checkout() {
   const [step, setStep] = useState(0);
   const [success, setSuccess] = useState(false);
 
+  // Promo code state
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
+  const applyPromoCode = () => {
+    const code = promoCodeInput.trim().toUpperCase();
+    if (!code) {
+      setPromoError("Veuillez entrer un code promo");
+      return;
+    }
+    if (PROMO_CODES[code]) {
+      setAppliedPromo(code);
+      setPromoError(null);
+      setPromoCodeInput("");
+    } else {
+      setPromoError("Code promo invalide");
+      setAppliedPromo(null);
+    }
+  };
+
+  const removePromoCode = () => {
+    setAppliedPromo(null);
+    setPromoError(null);
+  };
+
   const [datepickerRange, setDatepickerRange] = useState<Date[]>(
-    selectedRange || [new Date(), addDays(new Date(), 1)]
+    selectedRange || [new Date(), addDays(new Date(), 1)],
   );
 
   if (!serviceData || !selectedRange) {
@@ -413,7 +680,7 @@ export default function Checkout() {
 
   // normalizamos service y serviceId a string para evitar errores de tipo
   const service = allServices.find(
-    (s) => String(s.id) === String(serviceData.id)
+    (s) => String(s.id) === String(serviceData.id),
   ) as Service;
   const serviceId = String(service?.id || serviceData.id) as ServiceType;
 
@@ -471,10 +738,18 @@ export default function Checkout() {
     sizes,
   });
 
-  const total = calc.total;
+  const subtotal = calc.total;
   const days = calc.days;
-  // const rate = calc.rate;
+  const nights = calc.nights;
   const subtleMessage = calc.message;
+  const breakdown = calc.breakdown;
+
+  // Apply promo discount if valid code
+  const promoDiscount =
+    appliedPromo && PROMO_CODES[appliedPromo]
+      ? subtotal * PROMO_CODES[appliedPromo].discount
+      : 0;
+  const total = Number((subtotal - promoDiscount).toFixed(2));
 
   // Mensajes UI
   const flashMessage = (
@@ -553,18 +828,18 @@ export default function Checkout() {
 
                 {serviceId === "flash" ? (
                   <>
-<Calendar
-  onChange={(value) => {
-    if (!value) return;
-    const date = Array.isArray(value) ? value[0] : value;
-    if (date instanceof Date) {
-      setDatepickerRange([date, date]);
-    }
-  }}
-  value={datepickerRange[0]}
-  minDate={new Date()}
-  className="rounded-xl mx-auto shadow-lg"
-/>
+                    <Calendar
+                      onChange={(value) => {
+                        if (!value) return;
+                        const date = Array.isArray(value) ? value[0] : value;
+                        if (date instanceof Date) {
+                          setDatepickerRange([date, date]);
+                        }
+                      }}
+                      value={datepickerRange[0]}
+                      minDate={new Date()}
+                      className="rounded-xl mx-auto shadow-lg"
+                    />
 
                     {flashMessage}
                   </>
@@ -605,8 +880,8 @@ export default function Checkout() {
                     Math.round(
                       (datepickerRange?.[1]?.getTime() -
                         datepickerRange?.[0]?.getTime()) /
-                        (1000 * 60 * 60 * 24)
-                    )
+                        (1000 * 60 * 60 * 24),
+                    ),
                   )}{" "}
                   {service.title === "FORMULE FLASH" || serviceId === "flash"
                     ? "journée"
@@ -836,29 +1111,29 @@ export default function Checkout() {
         >
           <h3 className="text-3xl font-extrabold mb-6">Résumé</h3>
           <div className="space-y-4 text-lg font-medium">
-<p>
-  <strong>Dates :</strong> <br />
-  {(service.title === "FORMULE FLASH" || serviceId === "flash") ? (
-    // Caso FORMULE FLASH: una sola fecha
-    <>
-      {start.toLocaleDateString("fr-FR")}
-      <br />
-      <small className="text-gray-600 font-normal">
-        (1 journée)
-      </small>
-    </>
-  ) : (
-    // Caso normal: rango de fechas
-    <>
-      {start.toLocaleDateString("fr-FR")} → {end.toLocaleDateString("fr-FR")}
-      <br />
-      <small className="text-gray-600 font-normal">
+            <p>
+              <strong>Dates :</strong> <br />
+              {service.title === "FORMULE FLASH" || serviceId === "flash" ? (
+                // Caso FORMULE FLASH: una sola fecha
+                <>
+                  {start.toLocaleDateString("fr-FR")}
+                  <br />
+                  <small className="text-gray-600 font-normal">
+                    (1 journée)
+                  </small>
+                </>
+              ) : (
+                // Caso normal: rango de fechas
+                <>
+                  {start.toLocaleDateString("fr-FR")} →{" "}
+                  {end.toLocaleDateString("fr-FR")}
+                  <br />
+                  {/* <small className="text-gray-600 font-normal">
         ({days} {days > 1 ? "nuits" : "nuit"})
-      </small>
-    </>
-  )}
-</p>
-
+      </small> */}
+                </>
+              )}
+            </p>
 
             <p>
               <strong>Heure d’arrivée :</strong> <br />
@@ -891,10 +1166,100 @@ export default function Checkout() {
 
             <hr className="my-4 border-blue-300" />
 
+            {/* Desglose detallado */}
+            {breakdown.lines.length > 0 && (
+              <div className="w-full text-left space-y-2 text-sm bg-white rounded-xl p-4 shadow-inner">
+                <p className="font-bold text-gray-700 mb-2">Détail :</p>
+                {breakdown.lines.map((line, idx) => (
+                  <div key={idx} className="flex justify-between">
+                    <span className="text-gray-600">{line.label}</span>
+                    <span
+                      className={`font-semibold ${line.amount < 0 ? "text-green-600" : "text-gray-800"}`}
+                    >
+                      {line.amount < 0 ? " " : " = "}
+                      {line.amount.toFixed(2)} €
+                    </span>
+                  </div>
+                ))}
+                {/* Promo discount line */}
+                {appliedPromo && promoDiscount > 0 && (
+                  <div className="flex justify-between pt-2 border-t border-gray-200">
+                    <span className="text-green-600">
+                      {PROMO_CODES[appliedPromo].label}
+                    </span>
+                    <span className="font-semibold text-green-600">
+                      -{promoDiscount.toFixed(2)} €
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Code promo input */}
+            <div className="w-full mt-4">
+              <p className="font-bold text-gray-700 mb-2 text-left text-sm flex items-center gap-2">
+                <Tag className="w-4 h-4" /> Code promo
+              </p>
+              {appliedPromo ? (
+                <div className="flex items-center justify-between bg-green-50 border-2 border-green-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600 font-bold">
+                      {appliedPromo}
+                    </span>
+                    <span className="text-green-700 text-sm">(-10%)</span>
+                  </div>
+                  <button
+                    onClick={removePromoCode}
+                    className="text-red-500 hover:text-red-700 text-sm font-medium"
+                  >
+                    Retirer
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoCodeInput}
+                    onChange={(e) => {
+                      setPromoCodeInput(e.target.value.toUpperCase());
+                      setPromoError(null);
+                    }}
+                    placeholder="CODEPROMO10"
+                    className="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 uppercase"
+                  />
+                  <button
+                    onClick={applyPromoCode}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
+                  >
+                    Appliquer
+                  </button>
+                </div>
+              )}
+              {promoError && (
+                <p className="text-red-500 text-xs mt-1 text-left">
+                  {promoError}
+                </p>
+              )}
+            </div>
+
+            {subtleMessage && (
+              <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded-lg mt-2">
+                {subtleMessage}
+              </p>
+            )}
+
+            <hr className="my-4 border-blue-300" />
+
             <p className="text-2xl font-bold">
               Total:{" "}
               <span className="text-green-600">{total.toFixed(2)} €</span>
             </p>
+
+            {nights > 0 && (
+              <p className="text-sm text-gray-500">
+                ({nights} nuit{nights > 1 ? "s" : ""} au total)
+              </p>
+            )}
           </div>
         </motion.aside>
       </div>

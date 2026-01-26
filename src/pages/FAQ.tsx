@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const faqs = [
   {
     id: 1,
     question: "🐾 Quels types d'animaux acceptez-vous ?",
-    answer: <>Nous accueillons principalement les chiens et les chats, mais nous pouvons également prendre soin de petits animaux (lapins, rongeurs, oiseaux, etc.). Dans ce cas, nous vous invitons à nous <a href="/contact" className="text-blue-600 underline">contacter via le formulaire de contact</a>.</>
+    answer: <>Nous accueillons principalement les chiens et les chats, mais nous pouvons également prendre soin de petits animaux (lapins, rongeurs, oiseaux, etc.). Dans ce cas, nous vous invitons à nous <Link to="/contact" className="text-blue-600 underline">contacter via le formulaire de contact</Link>.</>
   },
   {
     id: 2,

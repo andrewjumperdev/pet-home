@@ -1,113 +1,324 @@
-# Backend Files - Integración Printful & Store
+# Backend Files - Maison pour Pets API
 
-Estos archivos deben copiarse a tu backend existente en `api.maisonpourpets.com`.
+Sistema completo de backend para reservas y e-commerce.
 
 ## Estructura de Archivos
 
 ```
 backend-files/
 ├── controllers/
-│   ├── printfulController.js   → Copiar a tu carpeta controllers/
-│   └── storePaymentController.js → Copiar a tu carpeta controllers/
+│   ├── bookingController.js      → Gestión de reservas (confirmar, rechazar, cancelar, refund)
+│   ├── capacityController.js     → Validación de capacidad (anti-overbooking)
+│   ├── emailController.js        → Sistema de emails profesionales
+│   ├── printfulController.js     → E-commerce con Printful
+│   └── storePaymentController.js → Pagos de la tienda
+├── middleware/
+│   └── auth.js                   → Autenticación, rate limiting, seguridad
 ├── routes/
-│   ├── printfulRoutes.js       → Copiar a tu carpeta routes/
-│   └── storeRoutes.js          → Copiar a tu carpeta routes/
+│   ├── bookingRoutes.js          → /api/bookings/*
+│   ├── capacityRoutes.js         → /api/capacity/*
+│   ├── emailRoutes.js            → /api/email/*
+│   ├── printfulRoutes.js         → /api/printful/*
+│   └── storeRoutes.js            → /api/store/*
 └── README.md
 ```
 
-## Instalación
+## Instalación Rápida
 
-### 1. Copiar archivos a tu backend
+### 1. Copiar archivos
 
 ```bash
-# Desde tu carpeta de backend
 cp -r backend-files/controllers/* ./controllers/
 cp -r backend-files/routes/* ./routes/
+cp -r backend-files/middleware/* ./middleware/
 ```
 
-### 2. Agregar variables de entorno
+### 2. Instalar dependencias
 
-Agregar a tu `.env`:
+```bash
+npm install resend jsonwebtoken express-rate-limit firebase-admin axios stripe
+```
+
+### 3. Variables de entorno (.env)
 
 ```env
-# Printful
-PRINTFUL_API_KEY=oMccnDUjkxnV6eMUbrlvjTur8XCjaPNk52gdxQrk
-PRINTFUL_STORE_ID=17547328
+# ========== STRIPE ==========
+STRIPE_SECRET_KEY=sk_live_xxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxx
 
-# Stripe Webhook para Store (opcional, para producción)
-STRIPE_STORE_WEBHOOK_SECRET=whsec_xxxxx
+# ========== FIREBASE ADMIN ==========
+FIREBASE_PROJECT_ID=pethome-db
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk@pethome-db.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+# ========== EMAILS (Resend) ==========
+RESEND_API_KEY=re_xxxxx
+FROM_EMAIL=Maison pour Pets <reservations@maisonpourpets.com>
+ADMIN_EMAIL=admin@maisonpourpets.com
+SITE_URL=https://maisonpourpets.com
+
+# ========== SEGURIDAD ==========
+JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+ADMIN_API_KEY=your-admin-api-key-for-secure-endpoints
+ADMIN_EMAILS=admin@maisonpourpets.com,manager@maisonpourpets.com
+
+# ========== PRINTFUL ==========
+PRINTFUL_API_KEY=xxxxx
+PRINTFUL_STORE_ID=17547328
 ```
 
-### 3. Actualizar server.js
-
-Agregar estas líneas a tu archivo principal del servidor:
+### 4. Actualizar server.js
 
 ```javascript
-// Importar nuevas rutas
-import printfulRoutes from "./routes/printfulRoutes.js";
-import storeRoutes from "./routes/storeRoutes.js";
+import express from 'express';
+import cors from 'cors';
 
-// ... después de tus otras rutas ...
+// Middleware
+import { rateLimiter, securityLogger, validateOrigin } from './middleware/auth.js';
 
-// Rutas de Printful (e-commerce)
-app.use("/api/printful", printfulRoutes);
+// Routes
+import bookingRoutes from './routes/bookingRoutes.js';
+import capacityRoutes from './routes/capacityRoutes.js';
+import emailRoutes from './routes/emailRoutes.js';
+import printfulRoutes from './routes/printfulRoutes.js';
+import storeRoutes from './routes/storeRoutes.js';
 
-// Rutas del Store (pagos)
-app.use("/api/store", storeRoutes);
+const app = express();
+
+// Middleware global
+app.use(cors({
+  origin: ['https://maisonpourpets.com', 'http://localhost:5173'],
+  credentials: true
+}));
+app.use(express.json());
+app.use(rateLimiter);
+app.use(securityLogger);
+app.use(validateOrigin());
+
+// ========== RUTAS ==========
+
+// Reservas
+app.use('/api/bookings', bookingRoutes);
+
+// Capacidad (disponibilidad)
+app.use('/api/capacity', capacityRoutes);
+
+// Emails
+app.use('/api/email', emailRoutes);
+
+// Printful (e-commerce)
+app.use('/api/printful', printfulRoutes);
+
+// Store (pagos tienda)
+app.use('/api/store', storeRoutes);
+
+// Tu ruta existente de pagos de reservas
+// app.use('/api/payments', paymentRoutes);
+
+app.listen(3000, () => {
+  console.log('🚀 Server running on port 3000');
+});
 ```
 
-### 4. Instalar dependencia (si no la tienes)
+---
 
-```bash
-npm install axios
-```
+## Endpoints
 
-## Endpoints Disponibles
+### 📅 Reservas (`/api/bookings`)
 
-### Printful (Productos y Órdenes)
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| GET | `/cancel-policy` | No | Política de cancelación |
+| GET | `/:id?email=xxx` | Email | Ver reserva (cliente) |
+| GET | `/by-email/:email` | No | Reservas del cliente |
+| POST | `/cancel` | Token | Cancelar + refund automático |
+| POST | `/confirm` | Admin | Confirmar y cobrar |
+| POST | `/reject` | Admin | Rechazar reserva |
+
+### 📊 Capacidad (`/api/capacity`)
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/api/printful/products` | Lista todos los productos |
-| GET | `/api/printful/products/:id` | Detalle de producto con variantes |
-| POST | `/api/printful/shipping/rates` | Calcular tarifas de envío |
-| GET | `/api/printful/orders` | Lista órdenes |
-| GET | `/api/printful/orders/:id` | Detalle de orden |
-| POST | `/api/printful/orders` | Crear orden |
-| POST | `/api/printful/webhook` | Webhook de Printful |
+| GET | `/check?startDate=&endDate=&quantity=` | Verificar disponibilidad |
+| GET | `/calendar?month=&year=` | Calendario del mes |
+| POST | `/reserve` | Reservar temporalmente (15 min) |
+| DELETE | `/reserve/:id` | Liberar reserva temporal |
 
-### Store (Pagos)
+### 📧 Emails (`/api/email`)
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/api/store/create-payment-intent` | Crear pago Stripe |
-| POST | `/api/store/webhook` | Webhook de Stripe |
+| POST | `/booking-received` | Email: solicitud recibida |
+| POST | `/booking-confirmed` | Email: confirmación + pago |
+| POST | `/booking-rejected` | Email: reserva rechazada |
+| POST | `/booking-cancelled` | Email: cancelación + refund |
 
-## Pruebas
+### 🛍️ Printful (`/api/printful`)
 
-Una vez desplegado, probar con:
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/products` | Lista productos |
+| GET | `/products/:id` | Detalle de producto |
+| POST | `/shipping/rates` | Calcular envío |
+| POST | `/orders` | Crear orden |
+| GET | `/orders` | Listar órdenes |
+| POST | `/webhook` | Webhook Printful |
 
-```bash
-# Obtener productos
-curl https://api.maisonpourpets.com/api/printful/products
+---
 
-# Obtener producto específico
-curl https://api.maisonpourpets.com/api/printful/products/414334849
+## Flujo de Reserva Completo
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. CLIENTE RESERVA                                          │
+├─────────────────────────────────────────────────────────────┤
+│ Frontend → /api/capacity/check (verificar disponibilidad)   │
+│ Frontend → /api/capacity/reserve (bloqueo temporal 15 min)  │
+│ Frontend → Stripe SetupIntent (guarda tarjeta, NO cobra)    │
+│ Frontend → Firebase addDoc (status: pending)                │
+│ Backend  → /api/email/booking-received (email al cliente)   │
+│ Backend  → /api/email/booking-received (email al admin)     │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 2. ADMIN CONFIRMA                                           │
+├─────────────────────────────────────────────────────────────┤
+│ Admin Panel → /api/bookings/confirm (cobra Stripe)          │
+│ Backend     → /api/email/booking-confirmed (email cliente)  │
+│ Firebase    → status: confirmed, paymentStatus: paid        │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 3. CLIENTE PUEDE CANCELAR                                   │
+├─────────────────────────────────────────────────────────────┤
+│ Email tiene link: /cancel/:bookingId?token=xxx              │
+│ Cliente → /api/bookings/cancel                              │
+│ Backend → Stripe Refund (según política)                    │
+│ Backend → /api/email/booking-cancelled                      │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Flujo de Compra
+---
 
-1. **Frontend**: Usuario agrega productos al carrito
-2. **Frontend**: Usuario va al checkout y llena datos de envío
-3. **Backend**: `POST /api/printful/shipping/rates` - Calcula envío
-4. **Backend**: `POST /api/store/create-payment-intent` - Crea PaymentIntent
-5. **Frontend**: Usuario completa pago con Stripe Elements
-6. **Backend**: `POST /api/printful/orders` - Crea orden en Printful
-7. **Printful**: Webhook notifica cuando se envía el paquete
+## Política de Cancelación
+
+```javascript
+{
+  freeCancellationDays: 3,      // Reembolso 100% hasta 3 días antes
+  partialRefundPercentage: 50,  // Reembolso 50% después
+  noRefundHours: 24             // Sin reembolso < 24 horas
+}
+```
+
+---
+
+## Seguridad Implementada
+
+| Feature | Descripción |
+|---------|-------------|
+| **Rate Limiting** | 100 req/15min general, 10 req/hora para pagos |
+| **API Key** | Endpoints admin requieren `X-API-KEY` header |
+| **JWT Tokens** | Tokens de cancelación seguros con expiración |
+| **Input Sanitization** | Limpieza automática de XSS/injection |
+| **CORS** | Solo dominios autorizados |
+| **Security Logging** | Log de accesos a endpoints sensibles |
+
+### Usar API Key en Admin
+
+```javascript
+// Desde el frontend admin
+fetch('/api/bookings/confirm', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-KEY': 'your-admin-api-key'
+  },
+  body: JSON.stringify({ bookingId: 'xxx' })
+});
+```
+
+---
+
+## Emails - Templates
+
+Los emails tienen diseño profesional responsive:
+
+1. **Booking Received** - Solicitud recibida (cliente + admin)
+2. **Booking Confirmed** - Confirmación con detalles de llegada
+3. **Booking Rejected** - Rechazo con invitación a reagendar
+4. **Booking Cancelled** - Cancelación con info de reembolso
+
+### Configurar Resend
+
+1. Crear cuenta en [resend.com](https://resend.com)
+2. Verificar dominio (agregar DNS records)
+3. Obtener API Key
+4. Agregar `RESEND_API_KEY` al .env
+
+---
+
+## Testing
+
+```bash
+# Verificar disponibilidad
+curl "https://api.maisonpourpets.com/api/capacity/check?startDate=2024-02-15&quantity=2"
+
+# Calendario del mes
+curl "https://api.maisonpourpets.com/api/capacity/calendar?month=2&year=2024"
+
+# Política de cancelación
+curl "https://api.maisonpourpets.com/api/bookings/cancel-policy"
+
+# Confirmar reserva (requiere API Key)
+curl -X POST "https://api.maisonpourpets.com/api/bookings/confirm" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: your-admin-key" \
+  -d '{"bookingId": "abc123"}'
+```
+
+---
+
+## Integración Frontend
+
+### Verificar disponibilidad antes de reservar
+
+```typescript
+// src/services/capacity.ts
+const API_URL = import.meta.env.VITE_API_URL;
+
+export async function checkAvailability(
+  startDate: string,
+  endDate: string,
+  quantity: number
+) {
+  const params = new URLSearchParams({
+    startDate,
+    endDate,
+    quantity: quantity.toString()
+  });
+
+  const response = await fetch(`${API_URL}/api/capacity/check?${params}`);
+  return response.json();
+}
+```
+
+### Enviar email después de crear booking
+
+```typescript
+// En Checkout.tsx después de crear el booking
+await fetch(`${API_URL}/api/email/booking-received`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ booking: newBooking })
+});
+```
+
+---
 
 ## Notas Importantes
 
-- El `X-PF-Store-Id` header es OBLIGATORIO para Printful
-- Las órdenes se crean y confirman automáticamente
-- El webhook de Printful notifica el tracking del envío
-- Los pagos usan metadata `type: "store_purchase"` para distinguirlos de reservas
+- **Firebase Admin** requiere service account key (descargar desde Firebase Console)
+- **Resend** tiene 3000 emails/mes gratis
+- **Stripe Refunds** pueden tomar 5-10 días en aparecer
+- Los **tokens de cancelación** expiran en 7 días
+- Las **reservas temporales** expiran en 15 minutos

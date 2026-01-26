@@ -18,7 +18,7 @@ import {
   CalendarDays,
   Filter
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 type ViewMode = 'month' | 'week' | 'day';
 
@@ -66,9 +66,8 @@ export default function CalendarDashboard() {
   }
 
   // Drag & Drop handlers
-  const handleDragStart = (e: React.DragEvent, booking: Booking) => {
+  const handleDragStart = (_e: MouseEvent | TouchEvent | PointerEvent, booking: Booking) => {
     setDraggedBooking(booking);
-    e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleDragOver = (e: React.DragEvent) => {

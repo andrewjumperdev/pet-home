@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
   <head>
-    <meta http-equiv="refresh" content="0; url=/" />
-    <script>
-      // También para routers que lean el hash
-      window.location.href = window.location.pathname.replace(
-        /^(.*?)\/[^\/]*$/,
-        "$1/"
-      );
+    <meta charset="utf-8" />
+    <title>Maison pour Pets</title>
+    <script type="text/javascript">
+      // SPA redirect para GitHub Pages
+      // Guarda la ruta actual en sessionStorage y redirige a index.html
+      sessionStorage.redirect = location.href;
+      location.replace(location.pathname.split('/').slice(0, 1).join('/') + '/');
     </script>
   </head>
   <body></body>

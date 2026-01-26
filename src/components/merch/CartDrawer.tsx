@@ -1,5 +1,5 @@
 /**
- * Drawer lateral del carrito de compras
+ * Panneau latéral du panier d'achat
  */
 
 import { useNavigate } from 'react-router-dom';
@@ -66,9 +66,9 @@ export default function CartDrawer() {
             <div className="flex justify-between items-center p-6 border-b-2 border-slate-100">
               <div className="flex items-center gap-3">
                 <ShoppingBag className="w-6 h-6 text-slate-900" />
-                <h2 className="text-xl font-bold text-slate-900">Mi Carrito</h2>
+                <h2 className="text-xl font-bold text-slate-900">Mon Panier</h2>
                 <span className="bg-slate-900 text-white px-2.5 py-0.5 rounded-full text-sm font-bold">
-                  {itemCount} artículo{itemCount !== 1 ? 's' : ''}
+                  {itemCount} article{itemCount !== 1 ? 's' : ''}
                 </span>
               </div>
               <button
@@ -79,14 +79,14 @@ export default function CartDrawer() {
               </button>
             </div>
 
-            {/* Barra de envío gratis */}
+            {/* Barre de livraison gratuite */}
             {cart.length > 0 && remainingForFreeShipping > 0 && (
               <div className="px-6 py-3 bg-teal-50 border-b border-teal-100">
                 <div className="flex items-center gap-2 text-sm text-teal-800">
                   <Truck className="w-4 h-4" />
                   <span>
-                    ¡Te faltan <strong>{remainingForFreeShipping.toFixed(2)}€</strong> para envío
-                    gratis!
+                    Plus que <strong>{remainingForFreeShipping.toFixed(2)}€</strong> pour la livraison
+                    gratuite !
                   </span>
                 </div>
                 <div className="mt-2 h-2 bg-teal-100 rounded-full overflow-hidden">
@@ -99,16 +99,16 @@ export default function CartDrawer() {
               </div>
             )}
 
-            {/* Lista de productos */}
+            {/* Liste des produits */}
             <div className="flex-1 overflow-y-auto p-6 bg-white">
               {cart.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <ShoppingBag className="w-10 h-10 text-slate-400" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2">Tu carrito está vacío</h3>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Votre panier est vide</h3>
                   <p className="text-slate-600 mb-6">
-                    Descubre nuestros productos de merchandising
+                    Découvrez nos produits de merchandising
                   </p>
                   <button
                     onClick={() => {
@@ -117,7 +117,7 @@ export default function CartDrawer() {
                     }}
                     className="px-6 py-3 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-colors"
                   >
-                    Ver productos
+                    Voir les produits
                   </button>
                 </div>
               ) : (
@@ -179,26 +179,26 @@ export default function CartDrawer() {
               )}
             </div>
 
-            {/* Footer con resumen y checkout */}
+            {/* Pied avec résumé et paiement */}
             {cart.length > 0 && (
               <div className="border-t-2 border-slate-100 p-6 space-y-4 bg-slate-50">
-                {/* Resumen de precios */}
+                {/* Résumé des prix */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-slate-600">
-                    <span>Subtotal</span>
+                    <span>Sous-total</span>
                     <span className="font-medium text-slate-900">{subtotal.toFixed(2)} €</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
-                    <span>IVA (21%)</span>
+                    <span>TVA (20%)</span>
                     <span className="font-medium text-slate-900">{tax.toFixed(2)} €</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
-                    <span>Envío</span>
+                    <span>Livraison</span>
                     <span className="font-medium text-slate-900">
                       {subtotal >= freeShippingThreshold ? (
-                        <span className="text-teal-600">Gratis</span>
+                        <span className="text-teal-600">Gratuite</span>
                       ) : (
-                        'Se calcula al finalizar'
+                        'Calculée à la finalisation'
                       )}
                     </span>
                   </div>
@@ -208,18 +208,18 @@ export default function CartDrawer() {
                   </div>
                 </div>
 
-                {/* Botón de checkout */}
+                {/* Bouton de paiement */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleCheckout}
                   className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg"
                 >
-                  Finalizar compra
+                  Finaliser la commande
                   <ArrowRight className="w-5 h-5" />
                 </motion.button>
 
-                {/* Continuar comprando */}
+                {/* Continuer les achats */}
                 <button
                   onClick={() => {
                     closeCart();
@@ -227,7 +227,7 @@ export default function CartDrawer() {
                   }}
                   className="w-full py-3 text-slate-600 font-medium hover:text-slate-900 transition-colors text-center"
                 >
-                  Continuar comprando
+                  Continuer mes achats
                 </button>
               </div>
             )}

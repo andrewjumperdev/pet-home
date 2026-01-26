@@ -62,6 +62,16 @@
     </script>
   </head>
   <body class="font-sans">
+    <!-- SPA redirect handler para GitHub Pages -->
+    <script type="text/javascript">
+      (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.href) {
+          history.replaceState(null, null, redirect);
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script src="https://kit.fontawesome.com/3d8f845060.js" crossorigin="anonymous"></script>

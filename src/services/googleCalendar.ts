@@ -107,10 +107,9 @@ export function isGoogleSignedIn(): boolean {
  */
 function bookingToCalendarEvent(booking: Booking): GoogleCalendarEvent {
   const petNames = booking.details.map(d => d.name).join(', ');
-  const petTypes = booking.details.map(d => d.breed).join(', ');
 
   // Determinar el color según el estado
-  const colorMap = {
+  const colorMap: Record<string, string> = {
     pending: '5',    // Amarillo
     confirmed: '10', // Verde
     rejected: '11',  // Rojo
@@ -118,7 +117,6 @@ function bookingToCalendarEvent(booking: Booking): GoogleCalendarEvent {
   };
 
   // Crear fecha y hora
-  const date = new Date(booking.date);
   const startTime = booking.arrivalTime || '09:00';
   const endTime = booking.departureTime || '18:00';
 
@@ -187,7 +185,7 @@ export async function createCalendarEvent(booking: Booking): Promise<string | nu
     });
 
     console.log('Event created:', response.result.id);
-    return response.result.id;
+    return response.result.id || null;
   } catch (error) {
     console.error('Error creating calendar event:', error);
     return null;
@@ -271,7 +269,7 @@ export async function getCalendarEvents(
       orderBy: 'startTime',
     });
 
-    return response.result.items || [];
+    return (response.result.items || []) as GoogleCalendarEvent[];
   } catch (error) {
     console.error('Error fetching calendar events:', error);
     return [];

@@ -1,5 +1,5 @@
 /**
- * Grid de productos del catálogo de merchandising
+ * Grille de produits du catalogue de merchandising
  */
 
 import { useEffect } from 'react';
@@ -22,9 +22,7 @@ export default function ProductGrid() {
     fetchProducts();
   }, [fetchProducts]);
 
-  console.log('Filtered Products:', filteredProducts);
-
-  // Estado de carga
+  // État de chargement
   if (isLoadingProducts) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -43,59 +41,59 @@ export default function ProductGrid() {
     );
   }
 
-  // Estado de error
+  // État d'erreur
   if (productsError) {
     return (
       <div className="text-center py-20">
         <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <AlertCircle className="w-10 h-10 text-red-500" />
         </div>
-        <h3 className="text-xl font-bold text-slate-900 mb-2">Error al cargar productos</h3>
+        <h3 className="text-xl font-bold text-slate-900 mb-2">Erreur lors du chargement des produits</h3>
         <p className="text-slate-600 mb-6">{productsError}</p>
         <button
           onClick={() => fetchProducts()}
           className="px-6 py-3 bg-slate-900 text-white rounded-lg font-semibold hover:bg-slate-800 transition-colors inline-flex items-center gap-2"
         >
           <RefreshCw className="w-5 h-5" />
-          Reintentar
+          Réessayer
         </button>
       </div>
     );
   }
 
-  // Sin productos
+  // Aucun produit
   if (filteredProducts.length === 0) {
     return (
       <div className="text-center py-20">
         <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Search className="w-10 h-10 text-slate-400" />
         </div>
-        <h3 className="text-xl font-bold text-slate-900 mb-2">No se encontraron productos</h3>
+        <h3 className="text-xl font-bold text-slate-900 mb-2">Aucun produit trouvé</h3>
         <p className="text-slate-600 mb-4">
           {searchQuery
-            ? 'Prueba con otros términos de búsqueda'
-            : 'Aún no hay productos disponibles'}
+            ? 'Essayez avec d\'autres termes de recherche'
+            : 'Aucun produit disponible pour le moment'}
         </p>
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
             className="px-6 py-3 bg-slate-900 text-white rounded-lg font-semibold hover:bg-slate-800 transition-colors"
           >
-            Ver todos los productos
+            Voir tous les produits
           </button>
         )}
       </div>
     );
   }
 
-  // Grid de productos
+  // Grille de produits
   return (
     <>
-      {/* Contador de resultados */}
+      {/* Compteur de résultats */}
       <div className="flex items-center justify-between mb-6">
         <p className="text-slate-600">
           <span className="font-bold text-slate-900">{filteredProducts.length}</span>{' '}
-          producto{filteredProducts.length !== 1 ? 's' : ''} encontrado
+          produit{filteredProducts.length !== 1 ? 's' : ''} trouvé
           {filteredProducts.length !== 1 ? 's' : ''}
         </p>
       </div>

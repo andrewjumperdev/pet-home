@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, FormEvent, JSX } from "react";
 import { Dog as DogIcon, Cat as CatIcon, PawPrint, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReviewsPage from "../components/Temoignages";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "react-calendar/dist/Calendar.css";
 import { db } from "../lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -166,7 +166,7 @@ function BookingModal({
   const navigate = useNavigate();
   const [step, setStep] = useState<number>(1);
   const [selectedRange, setSelectedRange] = useState<[Date, Date] | null>(null);
-  const [bookedDates, setBookedDates] = useState<string[]>([]);
+  const [_bookedDates, setBookedDates] = useState<string[]>([]);
   const [loadingDates, setLoadingDates] = useState<boolean>(true);
   const [quantity, setQuantity] = useState<number>(1);
   const [sizes, setSizes] = useState<string[]>(["Petit & moyen chien"]);
@@ -188,7 +188,6 @@ function BookingModal({
       );
       const snapshot = await getDocs(q);
       setBookedDates(snapshot.docs.map((doc) => doc.data().date as string));
-      console.log(bookedDates);
       setLoadingDates(false);
     }
     fetchBooked();
@@ -563,14 +562,14 @@ function BookingModal({
                 />
                 <span className="text-sm text-gray-700">
                   J'accepte les{" "}
-                  <a
-                    href="/cgv"
+                  <Link
+                    to="https://docs.google.com/document/d/e/2PACX-1vTWOtjmOqED2_IgIzI1nCXZv-G6eBlaIVaneIDZx0Ko4O1p56STTMDqUcuQs_d26JzlcNF6igfpP7_4/pub"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 underline hover:text-blue-800"
                   >
                     Conditions Générales de Vente
-                  </a>
+                  </Link>
                   {" "}*
                 </span>
               </label>

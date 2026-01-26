@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShoppingBag } from "lucide-react";
 
 const navLinks = [
   { name: "À propos", to: "/apropos" },
@@ -8,6 +8,7 @@ const navLinks = [
   { name: "Galerie", to: "/gallery" },
   { name: "Avis", to: "/avis" },
   { name: "Contact", to: "/contact" },
+  { name: "Boutique", to: "/store", icon: ShoppingBag },
 ];
 
 const Navbar: React.FC = () => {
@@ -34,15 +35,16 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Desktop links */}
-        <ul className="hidden md:flex space-x-6">
+        <ul className="hidden md:flex space-x-6 items-center">
           {navLinks.map((link) => (
             <li key={link.name}>
               <Link
                 to={link.to}
-                className={`text-white font-bold hover:underline hover:decoration-white transition duration-200 ${
+                className={`text-white font-bold hover:underline hover:decoration-white transition duration-200 flex items-center gap-1.5 ${
                   location.pathname === link.to ? "underline decoration-white" : ""
-                }`}
+                } ${link.icon ? "bg-white/20 px-3 py-1.5 rounded-full hover:bg-white/30" : ""}`}
               >
+                {link.icon && <link.icon size={18} />}
                 {link.name}
               </Link>
             </li>
@@ -56,16 +58,17 @@ const Navbar: React.FC = () => {
           isOpen ? "max-h-[400px] py-4" : "max-h-0 py-0"
         }`}
       >
-        <ul>
+        <ul className="space-y-2">
           {navLinks.map((link) => (
             <li key={link.name}>
               <Link
                 to={link.to}
                 onClick={() => setIsOpen(false)}
-                className={`block text-white font-medium hover:decoration-white transition duration-200 ${
+                className={`flex items-center gap-2 text-white font-medium hover:decoration-white transition duration-200 py-1 ${
                   location.pathname === link.to ? "underline decoration-white" : ""
-                }`}
+                } ${link.icon ? "bg-white/20 px-3 py-2 rounded-lg inline-flex" : ""}`}
               >
+                {link.icon && <link.icon size={18} />}
                 {link.name}
               </Link>
             </li>

@@ -1,5 +1,5 @@
 /**
- * Vista de detalle de producto con variantes
+ * Vue de détail du produit avec variantes
  */
 
 import { useState, useEffect } from 'react';
@@ -98,13 +98,13 @@ export default function ProductDetail() {
     return (
       <div className="min-h-screen bg-white pt-20 pb-12 px-4 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Producto no encontrado</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Produit non trouvé</h2>
           <button
             onClick={() => navigate('/store')}
             className="px-6 py-3 bg-slate-900 text-white rounded-lg font-semibold hover:bg-slate-800 transition-colors inline-flex items-center gap-2"
           >
             <ArrowLeft className="w-5 h-5" />
-            Volver al catálogo
+            Retour au catalogue
           </button>
         </div>
       </div>
@@ -133,17 +133,17 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-white pt-20 pb-12 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Navegación */}
+        {/* Navigation */}
         <button
           onClick={() => navigate('/store')}
           className="mb-8 inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors font-medium"
         >
           <ArrowLeft className="w-5 h-5" />
-          Volver al catálogo
+          Retour au catalogue
         </button>
 
         <div className="flex flex-col lg:flex-row gap-12">
-          {/* Imagen */}
+          {/* Image */}
           <div className="lg:w-1/2">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -156,7 +156,7 @@ export default function ProductDetail() {
                 className="w-full h-full object-contain p-8"
               />
 
-              {/* Botón favorito */}
+              {/* Bouton favori */}
               <button
                 onClick={() => setIsFavorite(!isFavorite)}
                 className={`absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${
@@ -202,21 +202,21 @@ export default function ProductDetail() {
             >
               <h1 className="text-3xl font-bold text-slate-900 mb-4">{sync_product.name}</h1>
 
-              {/* Precio */}
+              {/* Prix */}
               {selectedVariant && (
                 <div className="flex items-baseline gap-3 mb-6">
                   <span className="text-4xl font-bold text-teal-600">
                     {parseFloat(selectedVariant.retail_price).toFixed(2)} €
                   </span>
-                  <span className="text-sm text-slate-500">IVA incluido</span>
+                  <span className="text-sm text-slate-500">TVA incluse</span>
                 </div>
               )}
 
-              {/* Selector de variantes */}
+              {/* Sélecteur de variantes */}
               {sync_variants.length > 1 && (
                 <div className="mb-6">
                   <label className="block text-sm font-bold text-slate-900 mb-3">
-                    Selecciona variante
+                    Sélectionnez une variante
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {sync_variants.map((variant) => (
@@ -236,9 +236,9 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* Cantidad */}
+              {/* Quantité */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-slate-900 mb-3">Cantidad</label>
+                <label className="block text-sm font-bold text-slate-900 mb-3">Quantité</label>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center bg-slate-100 rounded-xl">
                     <button
@@ -258,7 +258,7 @@ export default function ProductDetail() {
 
                   {selectedVariant && (
                     <span className="text-slate-600">
-                      Total:{' '}
+                      Total :{' '}
                       <span className="font-bold text-slate-900">
                         {(parseFloat(selectedVariant.retail_price) * quantity).toFixed(2)} €
                       </span>
@@ -267,7 +267,7 @@ export default function ProductDetail() {
                 </div>
               </div>
 
-              {/* Botones de acción */}
+              {/* Boutons d'action */}
               <div className="flex gap-4 mb-8">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -283,12 +283,12 @@ export default function ProductDetail() {
                   {addedToCart ? (
                     <>
                       <Check className="w-5 h-5" />
-                      Añadido
+                      Ajouté
                     </>
                   ) : (
                     <>
                       <ShoppingBag className="w-5 h-5" />
-                      Añadir al carrito
+                      Ajouter au panier
                     </>
                   )}
                 </motion.button>
@@ -300,19 +300,19 @@ export default function ProductDetail() {
                   disabled={!selectedVariant}
                   className="flex-1 py-4 rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Comprar ahora
+                  Acheter maintenant
                 </motion.button>
               </div>
 
-              {/* Características */}
+              {/* Caractéristiques */}
               <div className="space-y-4 p-6 bg-slate-50 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
                     <Truck className="w-5 h-5 text-teal-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900">Envío a toda Europa</p>
-                    <p className="text-sm text-slate-500">Gratis a partir de 50€</p>
+                    <p className="font-semibold text-slate-900">Livraison dans toute l'Europe</p>
+                    <p className="text-sm text-slate-500">Gratuite à partir de 50€</p>
                   </div>
                 </div>
 
@@ -321,8 +321,8 @@ export default function ProductDetail() {
                     <Shield className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900">Pago 100% seguro</p>
-                    <p className="text-sm text-slate-500">Stripe con encriptación SSL</p>
+                    <p className="font-semibold text-slate-900">Paiement 100% sécurisé</p>
+                    <p className="text-sm text-slate-500">Stripe avec cryptage SSL</p>
                   </div>
                 </div>
 
@@ -331,19 +331,20 @@ export default function ProductDetail() {
                     <RotateCcw className="w-5 h-5 text-amber-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900">Devoluciones gratis</p>
-                    <p className="text-sm text-slate-500">30 días para cambios</p>
+                    <p className="font-semibold text-slate-900">Retours gratuits</p>
+                    <p className="text-sm text-slate-500">30 jours pour les échanges</p>
                   </div>
                 </div>
               </div>
 
-              {/* Descripción */}
+              {/* Description */}
               <div className="mt-8">
-                <h2 className="text-lg font-bold text-slate-900 mb-3">Descripción</h2>
+                <h2 className="text-lg font-bold text-slate-900 mb-3">Description</h2>
                 <p className="text-slate-600 leading-relaxed">
-                  Producto de alta calidad impreso bajo demanda. Cada artículo se fabrica
-                  especialmente para ti cuando realizas tu pedido, garantizando frescura y
-                  personalización. Materiales premium seleccionados para durabilidad y confort.
+                  Produit de haute qualité imprimé à la demande. Chaque article est fabriqué
+                  spécialement pour vous lorsque vous passez votre commande, garantissant
+                  fraîcheur et personnalisation. Matériaux premium sélectionnés pour leur
+                  durabilité et leur confort.
                 </p>
               </div>
             </motion.div>
