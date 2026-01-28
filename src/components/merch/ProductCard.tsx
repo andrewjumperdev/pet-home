@@ -6,8 +6,25 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Heart, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PrintfulProduct } from '../../api/printful';
+import { PrintfulProduct, PrintfulVariant } from '../../api/printful';
 import { usePrintfulStore } from '../../store/printfulStore';
+
+// Función helper para obtener la mejor imagen del mockup
+const getVariantImageUrl = (variant: PrintfulVariant | null, fallbackUrl: string): string => {
+  if (!variant) return fallbackUrl;
+
+  // Buscar imagen de preview (mockup con diseño)
+  const previewFile = variant.files?.find(f => f.type === 'preview');
+  if (previewFile?.preview_url) return previewFile.preview_url;
+
+  // Fallback a thumbnail del archivo
+  const defaultFile = variant.files?.find(f => f.type === 'default');
+  if (defaultFile?.preview_url) return defaultFile.preview_url;
+  if (defaultFile?.thumbnail_url) return defaultFile.thumbnail_url;
+
+  // Fallback a imagen del producto
+  return variant.product?.image || fallbackUrl;
+};
 
 interface ProductCardProps {
   product: PrintfulProduct;
@@ -38,7 +55,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         name: product.name,
         variantName: variant.name,
         price: parseFloat(variant.retail_price),
-        image: variant.product?.image || product.thumbnail_url,
+        image: getVariantImageUrl(variant, product.thumbnail_url),
         sku: variant.sku,
       });
       openCart();

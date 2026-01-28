@@ -18,6 +18,24 @@ import {
 } from 'lucide-react';
 import { usePrintfulStore } from '../../store/printfulStore';
 import { PrintfulVariant } from '../../api/printful';
+import CartDrawer from './CartDrawer';
+
+// Función helper para obtener la mejor imagen del mockup
+const getVariantImageUrl = (variant: PrintfulVariant | null, fallbackUrl: string): string => {
+  if (!variant) return fallbackUrl;
+
+  // Buscar imagen de preview (mockup con diseño)
+  const previewFile = variant.files?.find(f => f.type === 'preview');
+  if (previewFile?.preview_url) return previewFile.preview_url;
+
+  // Fallback a thumbnail del archivo
+  const defaultFile = variant.files?.find(f => f.type === 'default');
+  if (defaultFile?.preview_url) return defaultFile.preview_url;
+  if (defaultFile?.thumbnail_url) return defaultFile.thumbnail_url;
+
+  // Fallback a imagen del producto
+  return variant.product?.image || fallbackUrl;
+};
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -59,7 +77,7 @@ export default function ProductDetail() {
         name: product.sync_product.name,
         variantName: selectedVariant.name,
         price: parseFloat(selectedVariant.retail_price),
-        image: selectedVariant.product?.image || product.sync_product.thumbnail_url,
+        image: getVariantImageUrl(selectedVariant, product.sync_product.thumbnail_url),
         sku: selectedVariant.sku,
       },
       quantity
@@ -113,21 +131,9 @@ export default function ProductDetail() {
 
   const { sync_product, sync_variants } = product;
 
-  // Función para obtener la mejor imagen del mockup
+  // Helper local que usa el thumbnail del producto como fallback
   const getVariantImage = (variant: PrintfulVariant | null): string => {
-    if (!variant) return sync_product.thumbnail_url;
-
-    // Buscar imagen de preview (mockup con diseño)
-    const previewFile = variant.files?.find(f => f.type === 'preview');
-    if (previewFile?.preview_url) return previewFile.preview_url;
-
-    // Fallback a thumbnail del archivo
-    const defaultFile = variant.files?.find(f => f.type === 'default');
-    if (defaultFile?.preview_url) return defaultFile.preview_url;
-    if (defaultFile?.thumbnail_url) return defaultFile.thumbnail_url;
-
-    // Fallback a imagen del producto
-    return variant.product?.image || sync_product.thumbnail_url;
+    return getVariantImageUrl(variant, sync_product.thumbnail_url);
   };
 
   return (
@@ -351,6 +357,9 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* Cart Drawer */}
+      <CartDrawer />
     </div>
   );
 }

@@ -39,14 +39,15 @@ const ParallaxSection: React.FC = () => {
       <div className="absolute inset-0 bg-black/60 z-10" />
 
       <div className="relative z-20 text-white px-4 text-center">
-        <h1 className="text-3xl md:text-5xl font-bold mb-4">
-          Aventures, câlins et repos
-        </h1>
-        <p className="text-lg md:text-2xl font-light mb-8">
-          <span className="font-semibold">
-            Partez l'esprit tranquille et faites-nous confiance: votre boule
-            d'amour sera chouchoutée !
-          </span>
+        {/* Section header */}
+        <span className="inline-block text-blue-300 font-semibold text-sm uppercase tracking-wider mb-3">
+          Ce que disent nos clients
+        </span>
+        <h2 className="text-3xl md:text-5xl font-bold mb-4">
+          Ils nous font confiance
+        </h2>
+        <p className="text-lg md:text-xl font-light mb-10 max-w-2xl mx-auto text-white/90">
+          Découvrez les témoignages des familles qui ont confié leurs compagnons à PetHome
         </p>
 
         <div className="w-full max-w-6xl mx-auto">
