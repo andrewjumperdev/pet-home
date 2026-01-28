@@ -2,6 +2,7 @@
   "name": "pethome",
   "private": true,
   "version": "0.0.0",
+  "description": "Plataforma web para una guardería privada de perros y gatos con pagos y tienda integrados.",
   "type": "module",
   "scripts": {
     "dev": "vite",

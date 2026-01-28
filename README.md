@@ -1,54 +1,126 @@
-# React + TypeScript + Vite
+# PetHome
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Plataforma web para una guardería privada de perros y gatos. PetHome centraliza la experiencia de clientes y administración: información de servicios, galería, contacto, reservas y un módulo de tienda con pagos integrados.
 
-Currently, two official plugins are available:
+## ✨ Características destacadas
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Sitio público completo**: home, servicios, galería, acerca de y contacto.
+- **Solicitudes y comunicación**: formularios y contenido informativo para captar reservas.
+- **Pagos integrados**: Stripe y PayPal para experiencias de checkout modernas.
+- **Tienda con Printful**: catálogo, creación de órdenes y cálculo de envíos.
+- **Calendario y automatización**: integración con Google Calendar.
+- **Administración**: paneles internos para gestión de contenido.
 
-## Expanding the ESLint configuration
+## 🧱 Stack tecnológico
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+**Frontend**
+- React + TypeScript + Vite
+- Tailwind CSS
+- Redux Toolkit y Zustand
+- Stripe, PayPal
+- Firebase
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+**Backend**
+- Node.js + Express
+- Stripe (Payments)
+- Printful (Merchandising)
+
+## 📂 Estructura del repositorio
+
+```
+.
+├── server/              # Backend Express (Stripe + Printful)
+├── src/                 # Frontend React
+├── public/              # Recursos estáticos
+└── vite.config.ts       # Configuración de Vite
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ✅ Requisitos
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Node.js 18+
+- npm 9+
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+## ⚙️ Configuración de variables de entorno
+
+Crea un archivo `.env` en la raíz del proyecto con los valores que necesites.
+
+### Frontend (Vite)
+
 ```
+VITE_STRIPE_PUBLISHABLE_KEY=
+VITE_STRIPE_PUBLIC_KEY=
+VITE_API_URL=http://localhost:3001
+VITE_GOOGLE_CLIENT_ID=
+VITE_GOOGLE_API_KEY=
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+```
+
+### Backend (Express)
+
+```
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+PRINTFUL_API_KEY=
+PRINTFUL_STORE_ID=
+FRONTEND_URL=http://localhost:5173
+PORT=3001
+```
+
+## ▶️ Uso local
+
+Instala dependencias:
+
+```
+npm install
+```
+
+Levanta frontend y backend en paralelo:
+
+```
+npm run dev:all
+```
+
+Solo frontend:
+
+```
+npm run dev
+```
+
+Solo backend:
+
+```
+npm run server:dev
+```
+
+## 🧪 Calidad y linting
+
+```
+npm run lint
+```
+
+## 🚀 Build y despliegue
+
+```
+npm run build
+```
+
+Para publicar en GitHub Pages:
+
+```
+npm run deploy
+```
+
+## 🤝 Contribución
+
+1. Crea una rama con tu feature o fix.
+2. Mantén la coherencia con el estilo del proyecto.
+3. Abre un pull request describiendo el cambio.
+
+## 📬 Contacto
+
+Si necesitas soporte o quieres colaborar, abre un issue en este repositorio.
