@@ -70,9 +70,9 @@ const App: React.FC = () => {
             <Route path="/success" element={ <Success/> } />
             {/* Store routes (Printful) */}
             <Route path="/store" element={<StorePage />} />
-            <Route path="/store/:id" element={<ProductDetail />} />
             <Route path="/store/checkout" element={<StoreCheckout />} />
             <Route path="/store/success" element={<StoreSuccess />} />
+            <Route path="/store/:id" element={<ProductDetail />} />
 
             <Route path="/cgv" element={<ConditionsPage />} />
             <Route path="*" element={<NotFound />} />

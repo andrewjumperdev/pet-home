@@ -118,7 +118,7 @@ function CheckoutForm() {
   // Redirigir si el carrito está vacío
   useEffect(() => {
     if (cart.length === 0) {
-      navigate('/merch');
+      navigate('/store');
     }
   }, [cart, navigate]);
 
@@ -151,9 +151,9 @@ function CheckoutForm() {
     setError(null);
 
     try {
-      // 1. Crear PaymentIntent en el backend
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/create-payment-intent`, {
+      // 1. Crear PaymentIntent en el backend con datos del pedido
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/store/create-payment-intent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -163,7 +163,29 @@ function CheckoutForm() {
           currency: 'eur',
           metadata: {
             customer_email: shippingData.email,
+            customer_name: shippingData.name,
+            customer_phone: shippingData.phone,
             shipping_rate: selectedShippingRate.id,
+            subtotal: subtotal.toFixed(2),
+            shipping_cost: shipping.toFixed(2),
+            tax: tax.toFixed(2),
+          },
+          // Datos completos del pedido para el webhook
+          orderData: {
+            shipping: {
+              address1: shippingData.address1,
+              address2: shippingData.address2,
+              city: shippingData.city,
+              stateCode: shippingData.stateCode,
+              countryCode: shippingData.countryCode,
+              zip: shippingData.zip,
+            },
+            items: cart.map((item) => ({
+              syncVariantId: item.syncVariantId,
+              quantity: item.quantity,
+              name: item.name,
+              price: item.price,
+            })),
           },
         }),
       });
@@ -241,7 +263,7 @@ function CheckoutForm() {
 
         // 4. Limpiar carrito y redirigir
         clearCart();
-        navigate('/merch/success', {
+        navigate('/store/success', {
           state: {
             orderId: paymentIntent.id,
             email: shippingData.email,
@@ -264,7 +286,7 @@ function CheckoutForm() {
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <button
-          onClick={() => navigate('/merch')}
+          onClick={() => navigate('/store')}
           className="mb-8 inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors font-medium"
         >
           <ArrowLeft className="w-5 h-5" />
