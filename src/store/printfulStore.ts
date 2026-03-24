@@ -55,6 +55,7 @@ interface PrintfulState {
   shippingRates: PrintfulShippingRate[];
   selectedShippingRate: PrintfulShippingRate | null;
   isCalculatingShipping: boolean;
+  shippingError: string | null;
 
   // Filtros
   selectedCategory: string;
@@ -109,6 +110,7 @@ export const usePrintfulStore = create<PrintfulState>()(
       shippingRates: [],
       selectedShippingRate: null,
       isCalculatingShipping: false,
+      shippingError: null,
 
       selectedCategory: 'todos',
       searchQuery: '',
@@ -198,14 +200,14 @@ export const usePrintfulStore = create<PrintfulState>()(
 
       // Acciones de checkout
       setShippingAddress: (address) => {
-        set({ shippingAddress: address, shippingRates: [], selectedShippingRate: null });
+        set({ shippingAddress: address, shippingRates: [], selectedShippingRate: null, shippingError: null });
       },
 
       calculateShipping: async () => {
         const { shippingAddress, cart } = get();
         if (!shippingAddress || cart.length === 0) return;
 
-        set({ isCalculatingShipping: true });
+        set({ isCalculatingShipping: true, shippingError: null });
 
         try {
           const recipient: PrintfulRecipient = {
@@ -222,19 +224,31 @@ export const usePrintfulStore = create<PrintfulState>()(
           };
 
           const items = cart.map((item) => ({
-            sync_variant_id: item.syncVariantId,
+            variant_id: item.variantId,
             quantity: item.quantity,
           }));
 
+          console.log('[Shipping] Sending to Printful:', { recipient, items });
+
           const rates = await printfulClient.getShippingRates(recipient, items);
+
+          console.log('[Shipping] Rates received:', rates);
+
           set({
             shippingRates: rates,
             selectedShippingRate: rates[0] || null,
             isCalculatingShipping: false,
+            shippingError: rates.length === 0 ? 'No hay opciones de envío para esta dirección.' : null,
           });
-        } catch (error) {
-          console.error('Error calculating shipping:', error);
-          set({ isCalculatingShipping: false });
+        } catch (error: unknown) {
+          const axiosError = error as { response?: { data?: { details?: string; error?: string } }; message?: string };
+          const errMsg =
+            axiosError?.response?.data?.details ||
+            axiosError?.response?.data?.error ||
+            axiosError?.message ||
+            'Error al calcular el envío';
+          console.error('[Shipping] Error:', errMsg, error);
+          set({ isCalculatingShipping: false, shippingError: errMsg });
         }
       },
 

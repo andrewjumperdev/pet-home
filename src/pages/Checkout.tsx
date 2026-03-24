@@ -45,7 +45,7 @@ interface ContactInfo {
 const PRICES = {
   // Perro
   DOG_FLASH: 20, // Jornada diurna completa
-  DOG_HALF_FLASH: 10, // Media jornada (≤4h)
+  DOG_HALF_FLASH: 15, // Media jornada (≤4h)
   DOG_NIGHT: 23, // Por noche
 
   // Gato
@@ -53,22 +53,7 @@ const PRICES = {
   CAT_HALF_NIGHT: 9.5, // Media noche (extra ≤6h)
 };
 
-/* ---------------------- CODES PROMO ---------------------- */
-const PROMO_CODES: Record<
-  string,
-  { discount: number; label: string; description: string }
-> = {
-  BIENVENUE10: {
-    discount: 0.1,
-    label: "1ère réservation (-10%)",
-    description: "10% de réduction sur votre première réservation",
-  },
-  FIDELE10: {
-    discount: 0.1,
-    label: "5ème réservation (-10%)",
-    description: "10% de réduction pour votre fidélité",
-  },
-};
+const API = import.meta.env.VITE_API_URL || "https://api.maisonpourpets.com";
 
 /* ---------------------- Types para el cálculo ---------------------- */
 interface BookingCalculationParams {
@@ -148,10 +133,10 @@ export function calculateBookingTotal({
   const isFlash = normalizedId === "1" || normalizedId === "flash";
   const isSejour = normalizedId === "2" || normalizedId === "sejour";
   const isCat =
-    normalizedId === "felin" || normalizedId === "3" || normalizedId === "cat";
+    normalizedId === "feline" || normalizedId === "3" || normalizedId === "cat";
 
   // Valores por defecto si no hay horas
-  const arrival = arrivalHour ?? 9; // Default: 09:00
+  const arrival = arrivalHour ?? 8; // Default: 08:00
   const departure = departureHour ?? (isFlash ? 18 : 9); // Flash: 18:00, Séjour: 09:00
 
   const breakdown: PricingBreakdown = {
@@ -178,6 +163,15 @@ export function calculateBookingTotal({
         amount: total,
       });
       message = "Départ après 21h : facturé comme une nuit.";
+    } else if (duration > 9) {
+      // >9 heures → tarif nuit
+      breakdown.nuits = 1;
+      total = PRICES.DOG_NIGHT * qty;
+      breakdown.lines.push({
+        label: `${qty} nuit${qty > 1 ? "s" : ""} (garde > 9h)`,
+        amount: total,
+      });
+      message = "Garde de plus de 9h : facturée comme une nuit.";
     } else if (duration <= 4) {
       // ≤4 horas → media jornada
       breakdown.demiFlash = 1;
@@ -188,12 +182,22 @@ export function calculateBookingTotal({
       });
       message = "Demi-journée : garde de 4 heures maximum.";
     } else {
-      // >4 horas → jornada completa
+      // >4 horas y ≤9h → jornada completa
       breakdown.flash = 1;
       total = PRICES.DOG_FLASH * qty;
       breakdown.lines.push({
         label: `${qty} journée${qty > 1 ? "s" : ""} complète${qty > 1 ? "s" : ""}`,
         amount: total,
+      });
+    }
+
+    // Réduction automatique 10% pour le 2ème chien
+    if (qty >= 2) {
+      const discount = (total / qty) * 0.1;
+      total -= discount;
+      breakdown.lines.push({
+        label: `Réduction 2ème chien (-10%)`,
+        amount: -discount,
       });
     }
 
@@ -227,7 +231,7 @@ export function calculateBookingTotal({
     const extraHours = departure - arrival;
 
     if (extraHours > 0) {
-      // Prioridad 1: Salida > 21:00 → +1 noche
+      // Prioridad 1: Salida > 21:00 → +1 noche (tarif séjour)
       if (departure > 21) {
         breakdown.nuits += 1;
         const extraNight = PRICES.DOG_NIGHT * qty;
@@ -238,45 +242,34 @@ export function calculateBookingTotal({
         });
         message = "Nuit supplémentaire ajoutée : départ après 21h.";
       }
-      // Prioridad 2: Extra > 12h → +1 noche
-      else if (extraHours > 12) {
-        breakdown.nuits += 1;
-        const extraNight = PRICES.DOG_NIGHT * qty;
-        total += extraNight;
-        breakdown.lines.push({
-          label: `+1 nuit (prolongation > 12h)`,
-          amount: extraNight,
-        });
-        message =
-          "Prolongation de plus de 12h : facturée comme nuit supplémentaire.";
-      }
-      // >4h ≤12h → +1 FLASH
-      else if (extraHours > 4) {
+      // CGV: dépassement > 8h → journée complète (20€)
+      else if (extraHours > 8) {
         breakdown.flash = 1;
         const flashExtra = PRICES.DOG_FLASH * qty;
         total += flashExtra;
         breakdown.lines.push({
-          label: `+1 journée supplémentaire (prolongation ${Math.round(extraHours)}h)`,
+          label: `+1 journée supplémentaire (prolongation > 8h)`,
           amount: flashExtra,
         });
-        message = "Prolongation facturée comme journée supplémentaire.";
+        message = "Prolongation de plus de 8h : journée supplémentaire facturée.";
       }
-      // ≤4h → +½ FLASH
-      else if (extraHours > 0) {
+      // CGV: dépassement > 3h → demi-journée (15€)
+      else if (extraHours > 3) {
         breakdown.demiFlash = 1;
         const halfFlashExtra = PRICES.DOG_HALF_FLASH * qty;
         total += halfFlashExtra;
         breakdown.lines.push({
-          label: `+½ journée (prolongation ${Math.round(extraHours)}h)`,
+          label: `+½ journée (prolongation > 3h)`,
           amount: halfFlashExtra,
         });
-        message = "Prolongation facturée comme demi-journée.";
+        message = "Prolongation de plus de 3h : demi-journée facturée (15€).";
       }
+      // ≤3h → aucun supplément (dans la tolérance CGV)
     }
 
-    // Descuento 10% para 2º perro
+    // Réduction automatique 10% pour le 2ème chien (sur le coût complet d'un chien)
     if (qty >= 2) {
-      const discount = PRICES.DOG_NIGHT * nightsBase * 0.1;
+      const discount = (total / qty) * 0.1;
       total -= discount;
       breakdown.lines.push({
         label: `Réduction 2ème chien (-10%)`,
@@ -426,6 +419,9 @@ function CheckoutForm({
   arrivalTime,
   departureTime,
   isSterilized,
+  promoCode,
+  quoteToken,
+  selectedPet,
   onSuccess,
 }: {
   total: number;
@@ -439,6 +435,9 @@ function CheckoutForm({
   arrivalTime?: string;
   departureTime?: string;
   isSterilized: boolean;
+  promoCode?: string | null;
+  quoteToken?: string | null;
+  selectedPet?: any;
   onSuccess: () => void;
 }) {
   const stripe = useStripe();
@@ -457,10 +456,11 @@ function CheckoutForm({
     try {
       // Crear SetupIntent para guardar el método de pago sin cobrar
       const { data } = await axios.post(
-        "https://api.maisonpourpets.com/create-setup-intent",
+        `${API}/payments/create-setup-intent`,
         {
           client_name: contact.name,
           client_email: contact.email,
+          ...(quoteToken && { quoteToken }),
         },
       );
 
@@ -492,32 +492,57 @@ function CheckoutForm({
       }
 
       if (setupResult.setupIntent?.status === "succeeded") {
-        // Guardar reserva con el payment_method_id (NO se ha cobrado aún)
-        const paymentMethodId = setupResult.setupIntent
-          .payment_method as string;
+        const paymentMethodId = setupResult.setupIntent.payment_method as string;
+        const stripeCustomerId: string = data.customerId || "";
 
-        let curr = new Date(start);
-        const endDate = new Date(end);
-        while (curr <= endDate) {
-          await addDoc(collection(db, "bookings"), {
-            serviceId: service.id,
-            date: curr.toISOString().split("T")[0],
-            quantity,
-            sizes,
-            details,
-            contact,
-            paymentMethodId: paymentMethodId, // ID del método de pago guardado
-            paymentId: null, // Aún no hay pago confirmado
-            paymentStatus: "pending", // Estado del pago
-            createdAt: new Date().toISOString(),
-            status: "pending",
-            total: total,
-            arrivalTime: arrivalTime || "",
-            departureTime: departureTime || "",
-            isSterilized: isSterilized || false,
+        // Save a single booking doc with full date range
+        await addDoc(collection(db, "bookings"), {
+          serviceId: service.id,
+          startDate: start.toISOString().split("T")[0],
+          endDate: end.toISOString().split("T")[0],
+          date: start.toISOString().split("T")[0], // backwards compat
+          quantity,
+          sizes,
+          details,
+          contact,
+          paymentMethodId,
+          stripeCustomerId,
+          paymentId: null,
+          paymentStatus: "pending",
+          createdAt: new Date().toISOString(),
+          status: "pending",
+          total,
+          ...(quoteToken && { quoteToken }),
+          arrivalTime: arrivalTime || "",
+          departureTime: departureTime || "",
+          isSterilized: isSterilized || false,
+          ...(selectedPet && { petId: selectedPet.id, petName: selectedPet.name }),
+        });
+
+        // Upsert client profile with this pet
+        try {
+          await axios.post(`${API}/api/clients/upsert`, {
+            email: contact.email,
+            name: contact.name,
+            phone: contact.phone || "",
+            pet: selectedPet || null,
           });
-          curr.setDate(curr.getDate() + 1);
+        } catch (e) {
+          console.warn("[upsertClient] failed silently:", e);
         }
+
+        // Mark promo code as used
+        if (promoCode) {
+          try {
+            await axios.post(`${API}/api/promo/mark-used`, {
+              code: promoCode,
+              email: contact.email,
+            });
+          } catch (e) {
+            console.warn("[markPromoUsed] failed silently:", e);
+          }
+        }
+
         onSuccess();
       } else {
         setError("Échec de l'enregistrement du mode de paiement.");
@@ -625,12 +650,16 @@ export default function Checkout() {
     arrivalTime,
     departureTime,
     isSterilized,
+    clientEmail = "",
+    clientName = "",
+    clientPhone = "",
+    selectedPet = null,
   } = location.state || {};
 
   const [contact, setContact] = useState<ContactInfo>({
-    name: "",
-    email: "",
-    phone: "",
+    name: clientName,
+    email: clientEmail,
+    phone: clientPhone,
   });
   const [errors, setErrors] = useState<{
     name?: string;
@@ -640,30 +669,42 @@ export default function Checkout() {
   const [step, setStep] = useState(0);
   const [success, setSuccess] = useState(false);
 
-  // Promo code state
+  // Promo code state — validated server-side
   const [promoCodeInput, setPromoCodeInput] = useState("");
-  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number; label: string } | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [quoteToken, setQuoteToken] = useState<string | null>(null);
 
-  const applyPromoCode = () => {
+  const applyPromoCode = async () => {
     const code = promoCodeInput.trim().toUpperCase();
-    if (!code) {
-      setPromoError("Veuillez entrer un code promo");
-      return;
-    }
-    if (PROMO_CODES[code]) {
-      setAppliedPromo(code);
-      setPromoError(null);
-      setPromoCodeInput("");
-    } else {
-      setPromoError("Code promo invalide");
-      setAppliedPromo(null);
+    if (!code) { setPromoError("Veuillez entrer un code promo"); return; }
+    setPromoLoading(true);
+    setPromoError(null);
+    try {
+      const res = await axios.post(`${API}/api/promo/validate`, {
+        code,
+        email: contact.email || clientEmail,
+        serviceId: serviceId,
+      });
+      if (res.data.valid) {
+        setAppliedPromo({ code, discount: res.data.discount, label: res.data.label });
+        setPromoCodeInput("");
+      } else {
+        setPromoError(res.data.message || "Code promo invalide");
+        setAppliedPromo(null);
+      }
+    } catch {
+      setPromoError("Erreur de vérification. Réessayez.");
+    } finally {
+      setPromoLoading(false);
     }
   };
 
   const removePromoCode = () => {
     setAppliedPromo(null);
     setPromoError(null);
+    setQuoteToken(null);
   };
 
   const [datepickerRange, setDatepickerRange] = useState<Date[]>(
@@ -744,11 +785,8 @@ export default function Checkout() {
   const subtleMessage = calc.message;
   const breakdown = calc.breakdown;
 
-  // Apply promo discount if valid code
-  const promoDiscount =
-    appliedPromo && PROMO_CODES[appliedPromo]
-      ? subtotal * PROMO_CODES[appliedPromo].discount
-      : 0;
+  // Apply promo discount using server-validated values
+  const promoDiscount = appliedPromo ? Number((subtotal * appliedPromo.discount).toFixed(2)) : 0;
   const total = Number((subtotal - promoDiscount).toFixed(2));
 
   // Mensajes UI
@@ -1087,6 +1125,9 @@ export default function Checkout() {
                     arrivalTime={arrivalTime}
                     departureTime={departureTime}
                     isSterilized={isSterilized}
+                    promoCode={appliedPromo?.code ?? null}
+                    quoteToken={quoteToken}
+                    selectedPet={selectedPet}
                     onSuccess={onPaymentSuccess}
                   />
                 </Elements>
@@ -1184,12 +1225,8 @@ export default function Checkout() {
                 {/* Promo discount line */}
                 {appliedPromo && promoDiscount > 0 && (
                   <div className="flex justify-between pt-2 border-t border-gray-200">
-                    <span className="text-green-600">
-                      {PROMO_CODES[appliedPromo].label}
-                    </span>
-                    <span className="font-semibold text-green-600">
-                      -{promoDiscount.toFixed(2)} €
-                    </span>
+                    <span className="text-green-600">{appliedPromo.label}</span>
+                    <span className="font-semibold text-green-600">-{promoDiscount.toFixed(2)} €</span>
                   </div>
                 )}
               </div>
@@ -1203,15 +1240,10 @@ export default function Checkout() {
               {appliedPromo ? (
                 <div className="flex items-center justify-between bg-green-50 border-2 border-green-200 rounded-lg p-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-green-600 font-bold">
-                      {appliedPromo}
-                    </span>
-                    <span className="text-green-700 text-sm">(-10%)</span>
+                    <span className="text-green-600 font-bold">{appliedPromo.code}</span>
+                    <span className="text-green-700 text-sm">(-{Math.round(appliedPromo.discount * 100)}%)</span>
                   </div>
-                  <button
-                    onClick={removePromoCode}
-                    className="text-red-500 hover:text-red-700 text-sm font-medium"
-                  >
+                  <button onClick={removePromoCode} className="text-red-500 hover:text-red-700 text-sm font-medium">
                     Retirer
                   </button>
                 </div>
@@ -1220,18 +1252,16 @@ export default function Checkout() {
                   <input
                     type="text"
                     value={promoCodeInput}
-                    onChange={(e) => {
-                      setPromoCodeInput(e.target.value.toUpperCase());
-                      setPromoError(null);
-                    }}
-                    placeholder="CODEPROMO10"
+                    onChange={(e) => { setPromoCodeInput(e.target.value.toUpperCase()); setPromoError(null); }}
+                    placeholder="HPYNEWCLIENT"
                     className="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 uppercase"
                   />
                   <button
                     onClick={applyPromoCode}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
+                    disabled={promoLoading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
                   >
-                    Appliquer
+                    {promoLoading ? "…" : "Appliquer"}
                   </button>
                 </div>
               )}

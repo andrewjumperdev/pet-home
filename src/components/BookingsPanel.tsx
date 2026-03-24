@@ -1,6 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
+import axios from 'axios';
+
+const API = import.meta.env.VITE_API_URL || "https://api.maisonpourpets.com";
+const ADMIN_API_KEY = import.meta.env.VITE_ADMIN_API_KEY || "";
+
 import { db } from '../lib/firebase';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { Booking, BookingStatus } from '../types';
 import {
   CheckCircle,
@@ -29,7 +34,6 @@ export default function BookingsPanel() {
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Capacidad máxima por día (esto debería estar en una configuración)
   const MAX_CAPACITY_PER_DAY = 5;
 
   useEffect(() => {
@@ -45,88 +49,98 @@ export default function BookingsPanel() {
         return {
           ...booking,
           id: d.id,
-          status: booking.status || 'pending', // Por defecto, las reservas antiguas son 'pending'
+          status: booking.status || 'pending',
         };
       });
       setBookings(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (err) {
       console.error(err);
-      setError('Error al cargar las reservas.');
+      setError('Erreur lors du chargement des réservations.');
     } finally {
       setLoading(false);
     }
   }
 
-  // Confirmar reserva
+  // ── Backend-driven confirm/reject/resend ────────────────────────────────────
+
   async function confirmBooking(bookingId: string) {
     try {
       setActionLoading(bookingId);
-      const bookingRef = doc(db, 'bookings', bookingId);
-      await updateDoc(bookingRef, {
-        status: 'confirmed',
-        confirmedAt: new Date().toISOString()
-      });
-
+      const res = await axios.post(
+        `${API}/api/bookings/confirm`,
+        { bookingId },
+        { headers: { "x-api-key": ADMIN_API_KEY } }
+      );
       setBookings(prev =>
-        prev.map(b =>
-          b.id === bookingId
-            ? { ...b, status: 'confirmed' as BookingStatus, confirmedAt: new Date().toISOString() }
-            : b
+        prev.map(b => b.id === bookingId
+          ? { ...b, status: 'confirmed' as BookingStatus, confirmedAt: new Date().toISOString(), ...(res.data.emailStatus && { emailStatus: res.data.emailStatus }) }
+          : b
         )
       );
-
-      // TODO: Enviar email de confirmación al cliente
-      alert('Reserva confirmada con éxito. Email de confirmación enviado al cliente.');
-    } catch (err) {
-      console.error(err);
-      alert('Error al confirmar la reserva.');
+      const emailMsg = res.data.emailStatus === 'failed'
+        ? '\n⚠️ Email non envoyé — utilisez "Renvoyer email".'
+        : '\n✅ Email envoyé au client.';
+      alert(`Réservation confirmée et paiement encaissé.${emailMsg}`);
+    } catch (err: any) {
+      alert(`Erreur : ${err.response?.data?.error || err.message}`);
     } finally {
       setActionLoading(null);
     }
   }
 
-  // Rechazar reserva
   async function rejectBooking(bookingId: string, reason: string = '') {
     try {
       setActionLoading(bookingId);
-      const bookingRef = doc(db, 'bookings', bookingId);
-      await updateDoc(bookingRef, {
-        status: 'rejected',
-        rejectedAt: new Date().toISOString(),
-        rejectionReason: reason
-      });
-
+      const res = await axios.post(
+        `${API}/api/bookings/reject`,
+        { bookingId, reason },
+        { headers: { "x-api-key": ADMIN_API_KEY } }
+      );
       setBookings(prev =>
-        prev.map(b =>
-          b.id === bookingId
-            ? {
-                ...b,
-                status: 'rejected' as BookingStatus,
-                rejectedAt: new Date().toISOString(),
-                rejectionReason: reason
-              }
-            : b
+        prev.map(b => b.id === bookingId
+          ? { ...b, status: 'rejected' as BookingStatus, rejectedAt: new Date().toISOString(), rejectionReason: reason }
+          : b
         )
       );
+      const emailMsg = res.data.emailStatus === 'failed'
+        ? '\n⚠️ Email non envoyé.'
+        : '\n✅ Email envoyé au client.';
+      alert(`Réservation refusée.${emailMsg}`);
+    } catch (err: any) {
+      alert(`Erreur : ${err.response?.data?.error || err.message}`);
+    } finally {
+      setActionLoading(null);
+    }
+  }
 
-      // TODO: Enviar email de rechazo al cliente
-      alert('Reserva rechazada. Email de notificación enviado al cliente.');
-    } catch (err) {
-      console.error(err);
-      alert('Error al rechazar la reserva.');
+  async function resendEmail(bookingId: string, type: 'confirmed' | 'rejected') {
+    try {
+      setActionLoading(bookingId);
+      await axios.post(
+        `${API}/api/bookings/resend-email`,
+        { bookingId, type },
+        { headers: { "x-api-key": ADMIN_API_KEY } }
+      );
+      setBookings(prev =>
+        prev.map(b => b.id === bookingId ? { ...b, emailStatus: 'sent' } : b)
+      );
+      alert('Email renvoyé avec succès.');
+    } catch (err: any) {
+      alert(`Erreur lors du renvoi : ${err.response?.data?.error || err.message}`);
     } finally {
       setActionLoading(null);
     }
   }
 
   const handleReject = (bookingId: string) => {
-    const reason = prompt('¿Por qué rechazas esta reserva? (opcional)');
+    const reason = prompt('Motif du refus (optionnel) :');
     if (reason !== null) {
       rejectBooking(bookingId, reason);
     }
   };
 
-  // Estadísticas
+  // ── Statistics ──────────────────────────────────────────────────────────────
+
   const stats = useMemo(() => {
     const pending = bookings.filter(b => b.status === 'pending').length;
     const confirmed = bookings.filter(b => b.status === 'confirmed').length;
@@ -138,7 +152,6 @@ export default function BookingsPanel() {
     return { pending, confirmed, rejected, totalRevenue };
   }, [bookings]);
 
-  // Verificar disponibilidad por fecha
   const getAvailabilityForDate = (date: string) => {
     const confirmedBookings = bookings.filter(
       b => b.date === date && b.status === 'confirmed'
@@ -148,7 +161,8 @@ export default function BookingsPanel() {
     return { available, total: MAX_CAPACITY_PER_DAY, booked: totalQuantity };
   };
 
-  // Filtrado
+  // ── Filtering ───────────────────────────────────────────────────────────────
+
   const filtered = useMemo(() => {
     return bookings.filter(b => {
       const matchesSearch =
@@ -168,29 +182,29 @@ export default function BookingsPanel() {
         bg: 'bg-yellow-100',
         text: 'text-yellow-800',
         icon: Clock,
-        label: 'Pendiente'
+        label: 'En attente'
       },
       confirmed: {
         bg: 'bg-green-100',
         text: 'text-green-800',
         icon: CheckCircle,
-        label: 'Confirmada'
+        label: 'Confirmée'
       },
       rejected: {
         bg: 'bg-red-100',
         text: 'text-red-800',
         icon: XCircle,
-        label: 'Rechazada'
+        label: 'Refusée'
       },
       cancelled: {
         bg: 'bg-gray-100',
         text: 'text-gray-800',
         icon: XCircle,
-        label: 'Cancelada'
+        label: 'Annulée'
       }
     };
 
-    const config = configs[status];
+    const config = configs[status] || configs.pending;
     const Icon = config.icon;
 
     return (
@@ -201,14 +215,16 @@ export default function BookingsPanel() {
     );
   };
 
+  // ── Render ──────────────────────────────────────────────────────────────────
+
   return (
     <div className="space-y-6">
-      {/* Estadísticas */}
+      {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl shadow-sm border border-yellow-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-yellow-600">Pendientes</p>
+              <p className="text-sm font-medium text-yellow-600">En attente</p>
               <p className="text-3xl font-bold text-yellow-900 mt-1">{stats.pending}</p>
             </div>
             <div className="bg-yellow-200 p-3 rounded-lg">
@@ -220,7 +236,7 @@ export default function BookingsPanel() {
         <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl shadow-sm border border-green-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-green-600">Confirmadas</p>
+              <p className="text-sm font-medium text-green-600">Confirmées</p>
               <p className="text-3xl font-bold text-green-900 mt-1">{stats.confirmed}</p>
             </div>
             <div className="bg-green-200 p-3 rounded-lg">
@@ -232,7 +248,7 @@ export default function BookingsPanel() {
         <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-xl shadow-sm border border-red-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-red-600">Rechazadas</p>
+              <p className="text-sm font-medium text-red-600">Refusées</p>
               <p className="text-3xl font-bold text-red-900 mt-1">{stats.rejected}</p>
             </div>
             <div className="bg-red-200 p-3 rounded-lg">
@@ -244,7 +260,7 @@ export default function BookingsPanel() {
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-sm border border-blue-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-600">Ingresos</p>
+              <p className="text-sm font-medium text-blue-600">Revenus</p>
               <p className="text-3xl font-bold text-blue-900 mt-1">{stats.totalRevenue.toFixed(0)}€</p>
             </div>
             <div className="bg-blue-200 p-3 rounded-lg">
@@ -254,14 +270,14 @@ export default function BookingsPanel() {
         </div>
       </div>
 
-      {/* Filtros */}
+      {/* Filters */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Buscar por cliente, email o fecha..."
+              placeholder="Rechercher par client, email ou date..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -275,16 +291,16 @@ export default function BookingsPanel() {
               onChange={e => setStatusFilter(e.target.value as BookingStatus | 'all')}
               className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="all">Todos los estados</option>
-              <option value="pending">Pendientes</option>
-              <option value="confirmed">Confirmadas</option>
-              <option value="rejected">Rechazadas</option>
+              <option value="all">Tous les statuts</option>
+              <option value="pending">En attente</option>
+              <option value="confirmed">Confirmées</option>
+              <option value="rejected">Refusées</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* Lista de reservas */}
+      {/* Booking list */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full" />
@@ -297,7 +313,7 @@ export default function BookingsPanel() {
       ) : filtered.length === 0 ? (
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-12 text-center">
           <Calendar className="mx-auto text-gray-400 mb-3" size={48} />
-          <p className="text-gray-500 font-medium">No se encontraron reservas.</p>
+          <p className="text-gray-500 font-medium">Aucune réservation trouvée.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -343,7 +359,7 @@ export default function BookingsPanel() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {booking.status === 'pending' && (
                           <>
                             <button
@@ -352,7 +368,7 @@ export default function BookingsPanel() {
                               className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <CheckCircle size={18} />
-                              <span className="hidden sm:inline">Confirmar</span>
+                              <span className="hidden sm:inline">Confirmer</span>
                             </button>
                             <button
                               onClick={() => handleReject(booking.id)}
@@ -360,9 +376,19 @@ export default function BookingsPanel() {
                               className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <XCircle size={18} />
-                              <span className="hidden sm:inline">Rechazar</span>
+                              <span className="hidden sm:inline">Refuser</span>
                             </button>
                           </>
+                        )}
+                        {(booking as any).emailStatus === 'failed' && (
+                          <button
+                            onClick={() => resendEmail(booking.id, booking.status as 'confirmed' | 'rejected')}
+                            disabled={actionLoading === booking.id}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg text-xs font-medium transition"
+                          >
+                            <Mail size={14} />
+                            Renvoyer email
+                          </button>
                         )}
                         <button
                           onClick={() => setExpandedBooking(isExpanded ? null : booking.id)}
@@ -373,14 +399,18 @@ export default function BookingsPanel() {
                       </div>
                     </div>
 
-                    {/* Info rápida */}
+                    {/* Quick info */}
                     <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Fecha</p>
-                        <p className="text-sm font-semibold text-gray-900">{new Date(booking.date).toLocaleDateString('es-ES')}</p>
+                        <p className="text-xs text-gray-500 mb-1">Dates</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {(booking as any).startDate
+                            ? `${new Date((booking as any).startDate).toLocaleDateString('fr-FR')} → ${new Date((booking as any).endDate || (booking as any).startDate).toLocaleDateString('fr-FR')}`
+                            : new Date(booking.date).toLocaleDateString('fr-FR')}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Mascotas</p>
+                        <p className="text-xs text-gray-500 mb-1">Animaux</p>
                         <p className="text-sm font-semibold text-gray-900">{booking.quantity} × {booking.sizes.join(', ')}</p>
                       </div>
                       <div>
@@ -391,7 +421,7 @@ export default function BookingsPanel() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Disponibilidad</p>
+                        <p className="text-xs text-gray-500 mb-1">Disponibilité</p>
                         <p className={`text-sm font-semibold ${availability.available > 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {availability.available}/{availability.total} libres
                         </p>
@@ -399,7 +429,7 @@ export default function BookingsPanel() {
                     </div>
                   </div>
 
-                  {/* Detalles expandidos */}
+                  {/* Expanded details */}
                   <AnimatePresence>
                     {isExpanded && (
                       <motion.div
@@ -411,13 +441,13 @@ export default function BookingsPanel() {
                       >
                         <div className="p-6 space-y-4">
                           <div>
-                            <h4 className="font-semibold text-gray-900 mb-2">Detalles de las mascotas</h4>
+                            <h4 className="font-semibold text-gray-900 mb-2">Détails des animaux</h4>
                             <div className="space-y-2">
                               {booking.details.map((pet, idx) => (
                                 <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200">
                                   <p className="font-medium text-gray-900">{pet.name}</p>
                                   <p className="text-sm text-gray-600">
-                                    {pet.breed} · {pet.age} años
+                                    {pet.breed} · {pet.age} ans
                                   </p>
                                 </div>
                               ))}
@@ -426,40 +456,47 @@ export default function BookingsPanel() {
 
                           {(booking.arrivalTime || booking.departureTime) && (
                             <div>
-                              <h4 className="font-semibold text-gray-900 mb-2">Horarios</h4>
+                              <h4 className="font-semibold text-gray-900 mb-2">Horaires</h4>
                               <div className="bg-white p-3 rounded-lg border border-gray-200">
                                 <p className="text-sm text-gray-600">
-                                  Llegada: <span className="font-medium text-gray-900">{booking.arrivalTime || 'No especificada'}</span>
+                                  Arrivée : <span className="font-medium text-gray-900">{booking.arrivalTime || 'Non précisée'}</span>
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                  Salida: <span className="font-medium text-gray-900">{booking.departureTime || 'No especificada'}</span>
+                                  Départ : <span className="font-medium text-gray-900">{booking.departureTime || 'Non précisé'}</span>
                                 </p>
                               </div>
                             </div>
                           )}
 
                           <div>
-                            <h4 className="font-semibold text-gray-900 mb-2">Información adicional</h4>
+                            <h4 className="font-semibold text-gray-900 mb-2">Informations complémentaires</h4>
                             <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-1">
                               <p className="text-sm text-gray-600">
-                                Creado: <span className="font-medium text-gray-900">{new Date(booking.createdAt).toLocaleString('es-ES')}</span>
+                                Créé le : <span className="font-medium text-gray-900">{new Date(booking.createdAt).toLocaleString('fr-FR')}</span>
                               </p>
                               <p className="text-sm text-gray-600">
-                                Payment ID: <span className="font-mono text-xs text-gray-900">{booking.paymentId}</span>
+                                Payment ID : <span className="font-mono text-xs text-gray-900">{booking.paymentId}</span>
                               </p>
+                              {(booking as any).emailStatus && (
+                                <p className="text-sm text-gray-600">
+                                  Email : <span className={`font-medium ${(booking as any).emailStatus === 'sent' ? 'text-green-700' : 'text-orange-600'}`}>
+                                    {(booking as any).emailStatus === 'sent' ? 'Envoyé' : 'Non envoyé'}
+                                  </span>
+                                </p>
+                              )}
                               {booking.confirmedAt && (
                                 <p className="text-sm text-gray-600">
-                                  Confirmado: <span className="font-medium text-green-700">{new Date(booking.confirmedAt).toLocaleString('es-ES')}</span>
+                                  Confirmé le : <span className="font-medium text-green-700">{new Date(booking.confirmedAt).toLocaleString('fr-FR')}</span>
                                 </p>
                               )}
                               {booking.rejectedAt && (
                                 <p className="text-sm text-gray-600">
-                                  Rechazado: <span className="font-medium text-red-700">{new Date(booking.rejectedAt).toLocaleString('es-ES')}</span>
+                                  Refusé le : <span className="font-medium text-red-700">{new Date(booking.rejectedAt).toLocaleString('fr-FR')}</span>
                                 </p>
                               )}
                               {booking.rejectionReason && (
                                 <p className="text-sm text-gray-600">
-                                  Razón: <span className="font-medium text-red-700">{booking.rejectionReason}</span>
+                                  Motif : <span className="font-medium text-red-700">{booking.rejectionReason}</span>
                                 </p>
                               )}
                             </div>

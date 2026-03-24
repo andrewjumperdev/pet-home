@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import ReviewCard, { Review } from "./ReviewCard";
 import { db } from "../lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
@@ -76,12 +77,12 @@ export default function ReviewsPage() {
       {/* Botón para ver más */}
       {reviews.length > 3 && (
         <div className="flex justify-center mt-6">
-          <a
-            href="/avis"
+          <Link
+            to="/avis"
             className="flex items-center text-blue-600 hover:underline"
           >
             Voir plus <ChevronDown className="ml-2 h-4 w-4" />
-          </a>
+          </Link>
         </div>
       )}
     </div>

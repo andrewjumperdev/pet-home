@@ -17,8 +17,13 @@ interface GalleryProps {
 const Gallery: React.FC<GalleryProps> = ({ images }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [index, setIndex] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
   const galleryRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef<(HTMLDivElement | null)[]>([]);
+
+  const handleImageLoad = (i: number) => {
+    setLoadedImages(prev => new Set(prev).add(i));
+  };
 
   const handleClick = (i: number) => {
     setIndex(i);
@@ -66,12 +71,19 @@ const Gallery: React.FC<GalleryProps> = ({ images }) => {
             transition={{ duration: 0.3 }}
             onClick={() => handleClick(i)}
           >
+            {/* Skeleton placeholder shown until image loads */}
+            {!loadedImages.has(i) && (
+              <div className="w-full aspect-[4/3] animate-pulse bg-gray-200" />
+            )}
             {/* Image */}
             <img
               src={src}
               alt={`Moment de bonheur ${i + 1}`}
               loading="lazy"
-              className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-110"
+              onLoad={() => handleImageLoad(i)}
+              className={`w-full h-auto object-cover transition-all duration-500 group-hover:scale-110 ${
+                loadedImages.has(i) ? 'opacity-100' : 'opacity-0 absolute inset-0'
+              }`}
             />
 
             {/* Hover Overlay */}

@@ -29,7 +29,7 @@ const steps = [
   {
     number: "03",
     title: "Réservez vos dates",
-    description: "Choisissez vos dates de garde et validez votre réservation. Un acompte de 30% confirme la réservation.",
+    description: "Choisissez vos dates de garde et validez votre réservation. Un acompte de 20% confirme la réservation.",
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -39,7 +39,7 @@ const steps = [
   {
     number: "04",
     title: "Profitez de vos vacances",
-    description: "Partez l'esprit tranquille ! Recevez des photos quotidiennes et restez en contact 7j/7.",
+    description: "Partez l'esprit tranquille ! Recevez des photos au quotidien et restez en contact 7j/7.",
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -84,9 +84,9 @@ const HowItWorks: React.FC = () => {
           <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
             Comment ça marche ?
           </h2>
-          <p className="text-gray-600 text-lg">
+          {/* <p className="text-gray-600 text-lg">
             En quelques étapes simples, offrez à votre compagnon des vacances de rêve
-          </p>
+          </p> */}
         </div>
 
         {/* Steps */}
@@ -128,7 +128,7 @@ const HowItWorks: React.FC = () => {
         {/* CTA */}
         <div className="text-center">
           <CustomButton
-            label="Commencer maintenant"
+            label="Commencez maintenant"
             alt="Réserver une visite"
             variant="primary"
             to="/contact"

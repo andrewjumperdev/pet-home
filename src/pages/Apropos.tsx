@@ -75,7 +75,7 @@ const APropos: React.FC = () => {
     { icon: MapPin, text: "Antony, Hauts-de-Seine (92)" },
     { icon: Clock, text: "Disponibles 24h/24, 7j/7" },
     { icon: Users, text: "Garde exclusive et personnalisée" },
-    { icon: PawPrint, text: "Grand parc à proximité" },
+    { icon: PawPrint, text: "Grand parcs à proximité" },
   ];
 
   return (

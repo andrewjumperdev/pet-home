@@ -30,35 +30,36 @@ import { usePrintfulStore } from '../store/printfulStore';
 // Configurar Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
 
-// Países de la UE para envío
+// Pays de l'UE pour la livraison
 const EU_COUNTRIES = [
-  { code: 'ES', name: 'España' },
+  { code: 'FR', name: 'France' },
+  { code: 'BE', name: 'Belgique' },
+  { code: 'LU', name: 'Luxembourg' },
+  { code: 'CH', name: 'Suisse' },
+  { code: 'DE', name: 'Allemagne' },
+  { code: 'ES', name: 'Espagne' },
   { code: 'PT', name: 'Portugal' },
-  { code: 'FR', name: 'Francia' },
-  { code: 'DE', name: 'Alemania' },
-  { code: 'IT', name: 'Italia' },
-  { code: 'NL', name: 'Países Bajos' },
-  { code: 'BE', name: 'Bélgica' },
-  { code: 'AT', name: 'Austria' },
-  { code: 'IE', name: 'Irlanda' },
-  { code: 'PL', name: 'Polonia' },
-  { code: 'SE', name: 'Suecia' },
-  { code: 'DK', name: 'Dinamarca' },
-  { code: 'FI', name: 'Finlandia' },
-  { code: 'GR', name: 'Grecia' },
-  { code: 'CZ', name: 'República Checa' },
-  { code: 'RO', name: 'Rumanía' },
-  { code: 'HU', name: 'Hungría' },
-  { code: 'SK', name: 'Eslovaquia' },
-  { code: 'BG', name: 'Bulgaria' },
-  { code: 'HR', name: 'Croacia' },
-  { code: 'SI', name: 'Eslovenia' },
-  { code: 'LT', name: 'Lituania' },
-  { code: 'LV', name: 'Letonia' },
-  { code: 'EE', name: 'Estonia' },
-  { code: 'CY', name: 'Chipre' },
-  { code: 'LU', name: 'Luxemburgo' },
-  { code: 'MT', name: 'Malta' },
+  { code: 'IT', name: 'Italie' },
+  { code: 'NL', name: 'Pays-Bas' },
+  { code: 'AT', name: 'Autriche' },
+  { code: 'IE', name: 'Irlande' },
+  { code: 'PL', name: 'Pologne' },
+  { code: 'SE', name: 'Suède' },
+  { code: 'DK', name: 'Danemark' },
+  { code: 'FI', name: 'Finlande' },
+  { code: 'GR', name: 'Grèce' },
+  { code: 'CZ', name: 'République tchèque' },
+  { code: 'RO', name: 'Roumanie' },
+  { code: 'HU', name: 'Hongrie' },
+  { code: 'SK', name: 'Slovaquie' },
+  { code: 'BG', name: 'Bulgarie' },
+  { code: 'HR', name: 'Croatie' },
+  { code: 'SI', name: 'Slovénie' },
+  { code: 'LT', name: 'Lituanie' },
+  { code: 'LV', name: 'Lettonie' },
+  { code: 'EE', name: 'Estonie' },
+  { code: 'CY', name: 'Chypre' },
+  { code: 'MT', name: 'Malte' },
 ];
 
 interface ShippingFormData {
@@ -88,6 +89,7 @@ function CheckoutForm() {
     shippingRates,
     selectedShippingRate,
     isCalculatingShipping,
+    shippingError,
     setShippingAddress,
     calculateShipping,
     selectShippingRate,
@@ -106,7 +108,7 @@ function CheckoutForm() {
     formState: { errors },
   } = useForm<ShippingFormData>({
     defaultValues: {
-      countryCode: 'ES',
+      countryCode: 'FR',
     },
   });
 
@@ -290,7 +292,7 @@ function CheckoutForm() {
           className="mb-8 inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors font-medium"
         >
           <ArrowLeft className="w-5 h-5" />
-          Volver a la tienda
+          Retour à la boutique
         </button>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -310,7 +312,7 @@ function CheckoutForm() {
                 >
                   {step > 1 ? <Check className="w-4 h-4" /> : '1'}
                 </div>
-                <span className="font-semibold">Envío</span>
+                <span className="font-semibold">Livraison</span>
               </div>
               <div className="flex-1 h-0.5 bg-slate-200" />
               <div
@@ -325,7 +327,7 @@ function CheckoutForm() {
                 >
                   2
                 </div>
-                <span className="font-semibold">Pago</span>
+                <span className="font-semibold">Paiement</span>
               </div>
             </div>
 
@@ -342,10 +344,10 @@ function CheckoutForm() {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-slate-900">
-                      Dirección de envío
+                      Adresse de livraison
                     </h2>
                     <p className="text-slate-500 text-sm">
-                      Ingresa los datos para recibir tu pedido
+                      Entrez vos coordonnées pour recevoir votre commande
                     </p>
                   </div>
                 </div>
@@ -355,17 +357,17 @@ function CheckoutForm() {
                     {/* Nombre */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Nombre completo *
+                        Nom complet *
                       </label>
                       <input
                         type="text"
-                        {...register('name', { required: 'El nombre es obligatorio' })}
+                        {...register('name', { required: 'Le nom est obligatoire' })}
                         className={`w-full px-4 py-3 rounded-xl border-2 transition-colors ${
                           errors.name
                             ? 'border-red-300 focus:border-red-500'
                             : 'border-slate-200 focus:border-teal-500'
                         } focus:outline-none`}
-                        placeholder="Tu nombre completo"
+                        placeholder="Votre nom complet"
                       />
                       {errors.name && (
                         <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>
@@ -380,10 +382,10 @@ function CheckoutForm() {
                       <input
                         type="email"
                         {...register('email', {
-                          required: 'El email es obligatorio',
+                          required: "L'email est obligatoire",
                           pattern: {
                             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                            message: 'Email inválido',
+                            message: 'Email invalide',
                           },
                         })}
                         className={`w-full px-4 py-3 rounded-xl border-2 transition-colors ${
@@ -401,17 +403,17 @@ function CheckoutForm() {
                     {/* Teléfono */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Teléfono *
+                        Téléphone *
                       </label>
                       <input
                         type="tel"
-                        {...register('phone', { required: 'El teléfono es obligatorio' })}
+                        {...register('phone', { required: 'Le téléphone est obligatoire' })}
                         className={`w-full px-4 py-3 rounded-xl border-2 transition-colors ${
                           errors.phone
                             ? 'border-red-300 focus:border-red-500'
                             : 'border-slate-200 focus:border-teal-500'
                         } focus:outline-none`}
-                        placeholder="+34 600 000 000"
+                        placeholder="+33 6 00 00 00 00"
                       />
                       {errors.phone && (
                         <p className="mt-1 text-sm text-red-500">{errors.phone.message}</p>
@@ -421,11 +423,11 @@ function CheckoutForm() {
                     {/* País */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        País *
+                        Pays *
                       </label>
                       <div className="relative">
                         <select
-                          {...register('countryCode', { required: 'Selecciona un país' })}
+                          {...register('countryCode', { required: 'Sélectionnez un pays' })}
                           className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-teal-500 focus:outline-none appearance-none bg-white"
                         >
                           {EU_COUNTRIES.map((country) => (
@@ -441,17 +443,17 @@ function CheckoutForm() {
                     {/* Código postal */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Código postal *
+                        Code postal *
                       </label>
                       <input
                         type="text"
-                        {...register('zip', { required: 'El código postal es obligatorio' })}
+                        {...register('zip', { required: 'Le code postal est obligatoire' })}
                         className={`w-full px-4 py-3 rounded-xl border-2 transition-colors ${
                           errors.zip
                             ? 'border-red-300 focus:border-red-500'
                             : 'border-slate-200 focus:border-teal-500'
                         } focus:outline-none`}
-                        placeholder="28001"
+                        placeholder="75001"
                       />
                       {errors.zip && (
                         <p className="mt-1 text-sm text-red-500">{errors.zip.message}</p>
@@ -461,17 +463,17 @@ function CheckoutForm() {
                     {/* Dirección */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Dirección *
+                        Adresse *
                       </label>
                       <input
                         type="text"
-                        {...register('address1', { required: 'La dirección es obligatoria' })}
+                        {...register('address1', { required: "L'adresse est obligatoire" })}
                         className={`w-full px-4 py-3 rounded-xl border-2 transition-colors ${
                           errors.address1
                             ? 'border-red-300 focus:border-red-500'
                             : 'border-slate-200 focus:border-teal-500'
                         } focus:outline-none`}
-                        placeholder="Calle, número, piso..."
+                        placeholder="Rue, numéro, étage..."
                       />
                       {errors.address1 && (
                         <p className="mt-1 text-sm text-red-500">{errors.address1.message}</p>
@@ -481,30 +483,30 @@ function CheckoutForm() {
                     {/* Dirección 2 */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Información adicional (opcional)
+                        Complément d'adresse (optionnel)
                       </label>
                       <input
                         type="text"
                         {...register('address2')}
                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-teal-500 focus:outline-none"
-                        placeholder="Apartamento, suite, etc."
+                        placeholder="Appartement, bâtiment, etc."
                       />
                     </div>
 
                     {/* Ciudad */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Ciudad *
+                        Ville *
                       </label>
                       <input
                         type="text"
-                        {...register('city', { required: 'La ciudad es obligatoria' })}
+                        {...register('city', { required: 'La ville est obligatoire' })}
                         className={`w-full px-4 py-3 rounded-xl border-2 transition-colors ${
                           errors.city
                             ? 'border-red-300 focus:border-red-500'
                             : 'border-slate-200 focus:border-teal-500'
                         } focus:outline-none`}
-                        placeholder="Madrid"
+                        placeholder="Paris"
                       />
                       {errors.city && (
                         <p className="mt-1 text-sm text-red-500">{errors.city.message}</p>
@@ -514,13 +516,13 @@ function CheckoutForm() {
                     {/* Provincia/Estado */}
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Provincia/Estado
+                        Région (optionnel)
                       </label>
                       <input
                         type="text"
                         {...register('stateCode')}
                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-teal-500 focus:outline-none"
-                        placeholder="Madrid"
+                        placeholder="Île-de-France"
                       />
                     </div>
                   </div>
@@ -529,7 +531,7 @@ function CheckoutForm() {
                     type="submit"
                     className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
                   >
-                    Continuar al pago
+                    Continuer vers le paiement
                     <CreditCard className="w-5 h-5" />
                   </button>
                 </form>
@@ -551,10 +553,10 @@ function CheckoutForm() {
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-slate-900">
-                        Método de envío
+                        Mode de livraison
                       </h2>
                       <p className="text-slate-500 text-sm">
-                        Selecciona cómo quieres recibir tu pedido
+                        Sélectionnez comment vous souhaitez recevoir votre commande
                       </p>
                     </div>
                   </div>
@@ -563,7 +565,7 @@ function CheckoutForm() {
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
                       <span className="ml-3 text-slate-600">
-                        Calculando opciones de envío...
+                        Calcul des options de livraison...
                       </span>
                     </div>
                   ) : shippingRates.length > 0 ? (
@@ -593,7 +595,7 @@ function CheckoutForm() {
                             <div className="text-left">
                               <p className="font-semibold text-slate-900">{rate.name}</p>
                               <p className="text-sm text-slate-500">
-                                {rate.minDeliveryDays}-{rate.maxDeliveryDays} días laborables
+                                {rate.minDeliveryDays}-{rate.maxDeliveryDays} jours ouvrés
                               </p>
                             </div>
                           </div>
@@ -607,15 +609,20 @@ function CheckoutForm() {
                     <div className="text-center py-8">
                       <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
                       <p className="text-slate-600">
-                        No se encontraron opciones de envío disponibles.
+                        Aucune option de livraison disponible.
                         <br />
-                        Por favor, verifica tu dirección.
+                        Veuillez vérifier votre adresse.
                       </p>
+                      {shippingError && (
+                        <p className="mt-2 text-sm text-red-500 bg-red-50 rounded-lg px-4 py-2 inline-block">
+                          Erreur : {shippingError}
+                        </p>
+                      )}
                       <button
                         onClick={() => setStep(1)}
                         className="mt-4 text-teal-600 font-semibold hover:underline"
                       >
-                        Modificar dirección
+                        Modifier l'adresse
                       </button>
                     </div>
                   )}
@@ -629,17 +636,17 @@ function CheckoutForm() {
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-slate-900">
-                        Información de pago
+                        Informations de paiement
                       </h2>
                       <p className="text-slate-500 text-sm">
-                        Pago seguro con Stripe
+                        Paiement sécurisé avec Stripe
                       </p>
                     </div>
                   </div>
 
                   <div className="mb-6">
                     <label className="block text-sm font-semibold text-slate-700 mb-3">
-                      Tarjeta de crédito/débito
+                      Carte de crédit / débit
                     </label>
                     <div className="p-4 rounded-xl border-2 border-slate-200 focus-within:border-teal-500 transition-colors">
                       <CardElement
@@ -665,7 +672,7 @@ function CheckoutForm() {
                   <div className="flex items-center gap-2 mb-6 p-3 bg-green-50 rounded-lg">
                     <Shield className="w-5 h-5 text-green-600" />
                     <span className="text-sm text-green-700">
-                      Tu pago está protegido con encriptación SSL de 256 bits
+                      Votre paiement est protégé par un cryptage SSL 256 bits
                     </span>
                   </div>
 
@@ -683,7 +690,7 @@ function CheckoutForm() {
                       onClick={() => setStep(1)}
                       className="flex-1 py-4 border-2 border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-colors"
                     >
-                      Volver
+                      Retour
                     </button>
                     <button
                       onClick={handlePayment}
@@ -693,11 +700,11 @@ function CheckoutForm() {
                       {isProcessing ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          Procesando...
+                          Traitement en cours...
                         </>
                       ) : (
                         <>
-                          Pagar {total.toFixed(2)} €
+                          Payer {total.toFixed(2)} €
                           <Check className="w-5 h-5" />
                         </>
                       )}
@@ -712,7 +719,7 @@ function CheckoutForm() {
           <div className="lg:w-1/3">
             <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-100 sticky top-24">
               <h3 className="text-lg font-bold text-slate-900 mb-4">
-                Resumen del pedido
+                Récapitulatif de la commande
               </h3>
 
               {/* Productos */}
@@ -745,17 +752,17 @@ function CheckoutForm() {
               {/* Totales */}
               <div className="space-y-3 pt-4 border-t border-slate-200">
                 <div className="flex justify-between text-slate-600">
-                  <span>Subtotal</span>
+                  <span>Sous-total</span>
                   <span className="font-medium">{subtotal.toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>IVA (21%)</span>
+                  <span>TVA (21%)</span>
                   <span className="font-medium">{tax.toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>Envío</span>
+                  <span>Livraison</span>
                   <span className="font-medium">
-                    {shipping > 0 ? `${shipping.toFixed(2)} €` : 'Calculando...'}
+                    {shipping > 0 ? `${shipping.toFixed(2)} €` : 'En cours...'}
                   </span>
                 </div>
                 <div className="flex justify-between text-lg font-bold text-slate-900 pt-3 border-t border-slate-200">
@@ -768,11 +775,11 @@ function CheckoutForm() {
               <div className="mt-6 space-y-3">
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <Truck className="w-4 h-4 text-teal-600" />
-                  <span>Envío a toda Europa</span>
+                  <span>Livraison dans toute l'Europe</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <Shield className="w-4 h-4 text-teal-600" />
-                  <span>Pago 100% seguro</span>
+                  <span>Paiement 100% sécurisé</span>
                 </div>
               </div>
             </div>

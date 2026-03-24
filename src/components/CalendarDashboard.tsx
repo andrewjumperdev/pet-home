@@ -110,32 +110,45 @@ export default function CalendarDashboard() {
     }
   };
 
-  // Agrupar reservas por fecha
+  // Agrupar reservas por fecha — séjour appears on every day of its range
   const bookingsByDate = useMemo(() => {
     const grouped: Record<string, DayBooking> = {};
 
-    bookings.forEach(booking => {
-      const dateKey = booking.date;
+    const addToDate = (dateKey: string, booking: Booking) => {
       if (!grouped[dateKey]) {
         grouped[dateKey] = {
           date: dateKey,
           bookings: [],
-          capacity: {
-            total: MAX_CAPACITY,
-            used: 0,
-            pending: 0,
-            confirmed: 0
-          }
+          capacity: { total: MAX_CAPACITY, used: 0, pending: 0, confirmed: 0 }
         };
       }
+      // Avoid duplicates (a booking can only appear once per day)
+      if (!grouped[dateKey].bookings.find(b => b.id === booking.id)) {
+        grouped[dateKey].bookings.push(booking);
+        if (booking.status === 'confirmed') {
+          grouped[dateKey].capacity.confirmed += booking.quantity || 1;
+          grouped[dateKey].capacity.used += booking.quantity || 1;
+        } else if (booking.status === 'pending') {
+          grouped[dateKey].capacity.pending += booking.quantity || 1;
+        }
+      }
+    };
 
-      grouped[dateKey].bookings.push(booking);
+    bookings.forEach(booking => {
+      const b = booking as any;
+      const start = b.startDate || booking.date;
+      const end = b.endDate || booking.date;
 
-      if (booking.status === 'confirmed') {
-        grouped[dateKey].capacity.confirmed += booking.quantity || 1;
-        grouped[dateKey].capacity.used += booking.quantity || 1;
-      } else if (booking.status === 'pending') {
-        grouped[dateKey].capacity.pending += booking.quantity || 1;
+      if (start && end && start !== end) {
+        // Multi-day: add to every day in the range
+        const cur = new Date(start + 'T00:00:00');
+        const last = new Date(end + 'T00:00:00');
+        while (cur <= last) {
+          addToDate(cur.toISOString().split('T')[0], booking);
+          cur.setDate(cur.getDate() + 1);
+        }
+      } else {
+        addToDate(start || booking.date, booking);
       }
     });
 
@@ -242,30 +255,37 @@ export default function CalendarDashboard() {
   };
 
   // Renderizar una reserva individual
-  const renderBooking = (booking: Booking, index: number, compact: boolean = false) => {
-    const petName = booking.details[0]?.name || 'Sin nombre';
+  const renderBooking = (booking: Booking, index: number, compact: boolean = false, currentDateKey?: string) => {
+    const petName = booking.details[0]?.name || 'Sans nom';
+    const b = booking as any;
+    const isMultiDay = b.startDate && b.endDate && b.startDate !== b.endDate;
+    const isStart = currentDateKey === b.startDate;
+    const isEnd = currentDateKey === b.endDate;
+    const isContinuation = isMultiDay && !isStart && !isEnd;
 
     return (
       <motion.div
-        key={booking.id}
+        key={`${booking.id}-${currentDateKey}`}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.05 }}
-        draggable
-        onDragStart={(e) => handleDragStart(e, booking)}
+        draggable={!isContinuation}
+        onDragStart={(e) => !isContinuation && handleDragStart(e, booking)}
         onClick={() => setSelectedBooking(booking)}
         className={`
-          relative text-xs px-2 py-1 rounded border cursor-move
+          relative text-xs px-2 py-1 rounded border cursor-pointer
           transition-all duration-200
           ${getStatusColor(booking.status)}
-          hover:scale-105 hover:shadow-md hover:z-10
+          ${isContinuation ? 'opacity-60 border-dashed' : 'hover:scale-105 hover:shadow-md hover:z-10'}
         `}
       >
         <div className="flex items-center gap-1">
           {getAnimalIcon(booking)}
           {getStatusIcon(booking.status)}
-          <span className="font-semibold truncate flex-1">{petName}</span>
-          {!compact && <span className="text-xs opacity-75">×{booking.quantity}</span>}
+          <span className="font-semibold truncate flex-1">
+            {isContinuation ? '↔' : isStart && isMultiDay ? '→' : isEnd && isMultiDay ? '←' : ''} {petName}
+          </span>
+          {!compact && !isContinuation && <span className="text-xs opacity-75">×{booking.quantity}</span>}
         </div>
       </motion.div>
     );
@@ -343,7 +363,7 @@ export default function CalendarDashboard() {
         <div className={`space-y-1 overflow-y-auto ${isWeekView ? 'max-h-[500px]' : 'max-h-[calc(100%-3rem)]'}`}>
           {filteredBookings.length > (isWeekView ? 10 : 3) ? (
             <>
-              {filteredBookings.slice(0, isWeekView ? 8 : 2).map((booking, idx) => renderBooking(booking, idx))}
+              {filteredBookings.slice(0, isWeekView ? 8 : 2).map((booking, idx) => renderBooking(booking, idx, false, dateKey))}
               <div
                 className="text-xs text-center bg-gray-100 rounded px-2 py-1 font-semibold text-gray-700 cursor-pointer hover:bg-gray-200"
                 onClick={() => filteredBookings.forEach(b => setSelectedBooking(b))}
@@ -352,7 +372,7 @@ export default function CalendarDashboard() {
               </div>
             </>
           ) : (
-            filteredBookings.map((booking, idx) => renderBooking(booking, idx))
+            filteredBookings.map((booking, idx) => renderBooking(booking, idx, false, dateKey))
           )}
         </div>
       </motion.div>

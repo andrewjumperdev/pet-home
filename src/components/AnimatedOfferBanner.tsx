@@ -16,11 +16,13 @@ const AnimatedOfferBanner = () => {
       >
         <TicketPercent className="w-10 h-10" />
       </motion.div>
-      <div className="text-center text-yellow-900">
-        <p className="font-bold text-lg sm:text-xl">Offre spéciale</p>
+      <div className="text-yellow-900">
+        <p className="font-bold text-lg sm:text-xl text-center mb-1">Codes promo</p>
         <p className="text-sm sm:text-base">
-          🎉 10% sur ta 1<sup>ère</sup> réservation <br />
-          🐾 10% sur ta 5<sup>ème</sup> réservation
+          🎉 <span className="font-mono font-bold bg-yellow-300 px-1 rounded">HPYNEWCLIENT</span> · -10% sur toute première réservation
+        </p>
+        <p className="text-sm sm:text-base mt-1">
+          🐾 <span className="font-mono font-bold bg-yellow-300 px-1 rounded">LOVE4PET</span> · -15% sur la formule séjour
         </p>
       </div>
     </motion.div>

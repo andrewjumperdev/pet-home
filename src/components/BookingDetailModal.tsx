@@ -22,6 +22,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const API = import.meta.env.VITE_API_URL || 'https://api.maisonpourpets.com';
+const ADMIN_API_KEY = import.meta.env.VITE_ADMIN_API_KEY || '';
+
 interface BookingDetailModalProps {
   booking: Booking;
   isOpen: boolean;
@@ -41,7 +44,6 @@ export default function BookingDetailModal({
   const [editedDepartureTime, setEditedDepartureTime] = useState(booking?.departureTime || '');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Actualizar estados cuando cambia el booking
   useEffect(() => {
     if (booking) {
       setEditedDate(booking.date);
@@ -53,6 +55,8 @@ export default function BookingDetailModal({
 
   if (!booking) return null;
 
+  const b = booking as any;
+  const isMultiDay = b.startDate && b.endDate && b.startDate !== b.endDate;
   const isPet = booking.serviceId === 'felin' || booking.serviceId === '3';
 
   const getStatusConfig = (status: BookingStatus) => {
@@ -93,72 +97,28 @@ export default function BookingDetailModal({
   const StatusIcon = statusConfig.icon;
 
   async function handleConfirm() {
+    if (!confirm(`¿Confirmar la reserva y cobrar ${booking.total?.toFixed(2)}€ a la tarjeta del cliente?`)) return;
+
     try {
       setActionLoading('confirm');
+      const res = await fetch(`${API}/api/bookings/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ADMIN_API_KEY,
+        },
+        body: JSON.stringify({ bookingId: booking.id }),
+      });
 
-      // Si hay un paymentMethodId, procesar el pago
-      if (booking.paymentMethodId && booking.paymentStatus === 'pending') {
-        const confirmPayment = confirm(
-          `¿Confirmar la reserva y cobrar ${booking.total?.toFixed(2)}€ a la tarjeta del cliente?`
-        );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al confirmar');
 
-        if (!confirmPayment) {
-          setActionLoading(null);
-          return;
-        }
-
-        // Llamar al backend para procesar el pago
-        try {
-          const response = await fetch('https://api.maisonpourpets.com/charge-payment', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              bookingId: booking.id,
-              paymentMethodId: booking.paymentMethodId,
-              amount: Math.round((booking.total || 0) * 100),
-              client_email: booking.contact.email,
-              client_name: booking.contact.name,
-            }),
-          });
-
-          const data = await response.json();
-
-          if (!response.ok || data.error) {
-            throw new Error(data.error || 'Error al procesar el pago');
-          }
-
-          // Actualizar la reserva con el pago confirmado
-          const bookingRef = doc(db, 'bookings', booking.id);
-          await updateDoc(bookingRef, {
-            status: 'confirmed',
-            confirmedAt: new Date().toISOString(),
-            paymentId: data.paymentIntentId,
-            paymentStatus: 'paid',
-          });
-
-          alert(`Reserva confirmada y pago de ${booking.total?.toFixed(2)}€ procesado con éxito`);
-        } catch (paymentError: any) {
-          console.error('Error processing payment:', paymentError);
-          alert(`Error al procesar el pago: ${paymentError.message}. La reserva NO ha sido confirmada.`);
-          setActionLoading(null);
-          return;
-        }
-      } else {
-        // Si no hay método de pago o ya está pagado, solo confirmar
-        const bookingRef = doc(db, 'bookings', booking.id);
-        await updateDoc(bookingRef, {
-          status: 'confirmed',
-          confirmedAt: new Date().toISOString()
-        });
-      }
-
+      alert(`Reserva confirmada y pago de ${booking.total?.toFixed(2)}€ procesado con éxito`);
       onUpdate();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error confirming booking:', error);
-      alert('Error al confirmar la reserva');
+      alert(`Error: ${error.message}`);
     } finally {
       setActionLoading(null);
     }
@@ -170,17 +130,23 @@ export default function BookingDetailModal({
 
     try {
       setActionLoading('reject');
-      const bookingRef = doc(db, 'bookings', booking.id);
-      await updateDoc(bookingRef, {
-        status: 'rejected',
-        rejectedAt: new Date().toISOString(),
-        rejectionReason: reason
+      const res = await fetch(`${API}/api/bookings/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ADMIN_API_KEY,
+        },
+        body: JSON.stringify({ bookingId: booking.id, reason }),
       });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al rechazar');
+
       onUpdate();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error rejecting booking:', error);
-      alert('Error al rechazar la reserva');
+      alert(`Error: ${error.message}`);
     } finally {
       setActionLoading(null);
     }
@@ -207,17 +173,12 @@ export default function BookingDetailModal({
   }
 
   async function handleDelete() {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta reserva? Esta acción no se puede deshacer.')) {
-      return;
-    }
+    if (!confirm('¿Estás seguro de que quieres eliminar esta reserva? Esta acción no se puede deshacer.')) return;
 
     try {
       setActionLoading('delete');
-      // En lugar de eliminar, cambiar a cancelada
       const bookingRef = doc(db, 'bookings', booking.id);
-      await updateDoc(bookingRef, {
-        status: 'cancelled',
-      });
+      await updateDoc(bookingRef, { status: 'cancelled' });
       onUpdate();
       onClose();
     } catch (error) {
@@ -227,6 +188,14 @@ export default function BookingDetailModal({
       setActionLoading(null);
     }
   }
+
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
 
   return (
     <AnimatePresence>
@@ -270,6 +239,11 @@ export default function BookingDetailModal({
                           <StatusIcon size={16} />
                           {statusConfig.label}
                         </span>
+                        {isMultiDay && (
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-semibold">
+                            Séjour {b.startDate} → {b.endDate}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -334,7 +308,9 @@ export default function BookingDetailModal({
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">Fecha</p>
+                      <p className="text-xs text-gray-600 mb-1">
+                        {isMultiDay ? 'Período' : 'Fecha'}
+                      </p>
                       {isEditing ? (
                         <input
                           type="date"
@@ -344,12 +320,9 @@ export default function BookingDetailModal({
                         />
                       ) : (
                         <p className="font-semibold text-gray-900">
-                          {new Date(booking.date).toLocaleDateString('es-ES', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
+                          {isMultiDay
+                            ? `${formatDate(b.startDate)} → ${formatDate(b.endDate)}`
+                            : formatDate(booking.date)}
                         </p>
                       )}
                     </div>
@@ -446,18 +419,20 @@ export default function BookingDetailModal({
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs text-gray-600 mb-1">Total Pagado</p>
+                      <p className="text-xs text-gray-600 mb-1">Total</p>
                       <p className="text-2xl font-bold text-green-600 flex items-center gap-1">
                         <Euro size={20} />
                         {booking.total?.toFixed(2) || '0.00'}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">ID de Pago</p>
-                      <p className="font-mono text-xs text-gray-900 bg-white px-2 py-1 rounded border border-green-200">
-                        {booking.paymentId}
-                      </p>
-                    </div>
+                    {booking.paymentId && (
+                      <div>
+                        <p className="text-xs text-gray-600 mb-1">ID de Pago</p>
+                        <p className="font-mono text-xs text-gray-900 bg-white px-2 py-1 rounded border border-green-200">
+                          {booking.paymentId}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -470,18 +445,18 @@ export default function BookingDetailModal({
                   <div className="space-y-2 text-sm text-gray-600">
                     <p>
                       <strong>Creado:</strong>{' '}
-                      {new Date(booking.createdAt).toLocaleString('es-ES')}
+                      {new Date(booking.createdAt).toLocaleString('fr-FR')}
                     </p>
                     {booking.confirmedAt && (
                       <p>
                         <strong className="text-green-700">Confirmado:</strong>{' '}
-                        {new Date(booking.confirmedAt).toLocaleString('es-ES')}
+                        {new Date(booking.confirmedAt).toLocaleString('fr-FR')}
                       </p>
                     )}
                     {booking.rejectedAt && (
                       <p>
                         <strong className="text-red-700">Rechazado:</strong>{' '}
-                        {new Date(booking.rejectedAt).toLocaleString('es-ES')}
+                        {new Date(booking.rejectedAt).toLocaleString('fr-FR')}
                       </p>
                     )}
                     {booking.rejectionReason && (
@@ -506,7 +481,11 @@ export default function BookingDetailModal({
                         disabled={actionLoading !== null}
                         className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition disabled:opacity-50"
                       >
-                        <CheckCircle size={20} />
+                        {actionLoading === 'confirm' ? (
+                          <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                        ) : (
+                          <CheckCircle size={20} />
+                        )}
                         Confirmar Reserva
                       </button>
                       <button
@@ -514,7 +493,11 @@ export default function BookingDetailModal({
                         disabled={actionLoading !== null}
                         className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition disabled:opacity-50"
                       >
-                        <XCircle size={20} />
+                        {actionLoading === 'reject' ? (
+                          <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                        ) : (
+                          <XCircle size={20} />
+                        )}
                         Rechazar
                       </button>
                     </>

@@ -12,7 +12,7 @@ const features = [
       </svg>
     ),
     title: "Garderie exclusive",
-    desc: "Maximum 2 chiens ou 2 chats à la fois pour une attention personnalisée",
+    desc: "Maximum 2 chiens ou 2 chats à la fois pour une attention privilégiée",
     highlight: "100% dédié",
   },
   {
@@ -71,7 +71,7 @@ const Features: React.FC = () => {
           Nos engagements
         </span>
         <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
-          On vous garantit le meilleur
+          Service d'exception garanti
         </h2>
         <p className="text-gray-600 text-lg">
           Votre animal mérite une attention exceptionnelle. C'est pourquoi nous limitons nos places pour offrir un service premium.
