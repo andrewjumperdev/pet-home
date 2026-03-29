@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef, FormEvent, JSX } from "react";
+import React, { useState, useEffect, useRef, JSX } from "react";
 import { Dog as DogIcon, Cat as CatIcon, PawPrint, X, Camera, ChevronRight, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReviewsPage from "../components/Temoignages";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "react-calendar/dist/Calendar.css";
-import { db, storage } from "../lib/firebase.tsx";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { storage } from "../lib/firebase.tsx";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
@@ -13,9 +12,6 @@ import "react-date-range/dist/theme/default.css";
 import { addDays } from "date-fns";
 import axios from "axios";
 
-import dogSmallGif from "/images/dog_small.gif";
-import dogLargeGif from "/images/dog_large.gif";
-import catGif from "/images/cat.gif";
 import CustomButton from "../components/CustomButton";
 import { Helmet } from "react-helmet";
 import AnimatedOfferBanner from "../components/AnimatedOfferBanner";
@@ -83,9 +79,6 @@ export const services: Service[] = [
   },
 ];
 
-const petVariant = {
-  idle: { y: [0, -8, 0], transition: { duration: 1.5, repeat: Infinity } },
-};
 
 export default function Services() {
   const [modal, setModal] = useState<Service | null>(null);
@@ -178,6 +171,12 @@ const timeOptions = Array.from({ length: 14 * 2 }, (_, i) => {
   return `${hour.toString().padStart(2, "0")}:${minute}`;
 });
 
+const departureTimeOptions = Array.from({ length: 31 }, (_, i) => {
+  const hour = 8 + Math.floor(i / 2);
+  const minute = i % 2 === 0 ? "00" : "30";
+  return `${hour.toString().padStart(2, "0")}:${minute}`;
+});
+
 // ─── Step indicator ──────────────────────────────────────────────────────────
 function ModalStepBar({ step, total }: { step: number; total: number }) {
   return (
@@ -235,7 +234,7 @@ function BookingModal({
   const [petFormTouched, setPetFormTouched] = useState(false);
   const [photoPreview, setPhotoPreview] = useState("");
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState("");
-  const [photoUploading, setPhotoUploading] = useState(false);
+  const [, setPhotoUploading] = useState(false);
   // Optional 2nd pet
   const [secondPet, setSecondPet] = useState<{ name: string; breed: string; age: string; size: string } | null>(null);
 
@@ -306,7 +305,7 @@ function BookingModal({
   };
 
   const handleFinalSubmit = async () => {
-    if (service.type !== "cat" && isSterilized === "") return;
+    if (service.id !== "feline" && isSterilized === "") return;
     if (!acceptCGV) return;
     if (!selectedRange || !arrivalTime || !departureTime) return;
 
@@ -634,7 +633,7 @@ function BookingModal({
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">-- Heure --</option>
-                        {timeOptions.map((t) => <option key={`${prefix}-${t}`} value={t}>{t}</option>)}
+                        {(prefix === "dep" ? departureTimeOptions : timeOptions).map((t) => <option key={`${prefix}-${t}`} value={t}>{t}</option>)}
                       </select>
                     </div>
                   ))}
@@ -690,7 +689,7 @@ function BookingModal({
                         </button>
                       ))}
                     </div>
-                    {service.type !== "cat" && isSterilized === "" && (
+                    {service.id !== "feline" && isSterilized === "" && (
                       <p className="text-red-500 text-xs mt-1">Veuillez sélectionner une option</p>
                     )}
                   </div>
@@ -722,7 +721,7 @@ function BookingModal({
 
                 <button
                   onClick={handleFinalSubmit}
-                  disabled={submitting || !acceptCGV || (service.type !== "cat" && isSterilized === "")}
+                  disabled={submitting || !acceptCGV || (service.id !== "feline" && isSterilized === "")}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"
                 >
                   {submitting ? (

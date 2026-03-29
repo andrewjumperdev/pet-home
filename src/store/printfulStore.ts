@@ -224,6 +224,7 @@ export const usePrintfulStore = create<PrintfulState>()(
           };
 
           const items = cart.map((item) => ({
+            sync_variant_id: item.variantId,
             variant_id: item.variantId,
             quantity: item.quantity,
           }));

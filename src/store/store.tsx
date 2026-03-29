@@ -7,7 +7,6 @@ import { motion } from 'framer-motion';
 import {
   Search,
   ShoppingBag,
-  Sparkles,
   Heart,
   Package,
   Truck,

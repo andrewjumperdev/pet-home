@@ -11,6 +11,8 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 import { addDays } from "date-fns";
 import {
   Calendar as CalendarIcon,
@@ -18,11 +20,24 @@ import {
   User,
   CheckCircle2,
   Tag,
+  Clock,
 } from "lucide-react";
 import { db } from "../lib/firebase";
 import { addDoc, collection } from "firebase/firestore";
 import { services as allServices } from "./Services";
 import { DateRange } from "react-date-range";
+
+const timeOptions = Array.from({ length: 14 * 2 }, (_, i) => {
+  const hour = 8 + Math.floor(i / 2);
+  const minute = i % 2 === 0 ? "00" : "30";
+  return `${hour.toString().padStart(2, "0")}:${minute}`;
+});
+
+const departureTimeOptions = Array.from({ length: 31 }, (_, i) => {
+  const hour = 8 + Math.floor(i / 2);
+  const minute = i % 2 === 0 ? "00" : "30";
+  return `${hour.toString().padStart(2, "0")}:${minute}`;
+});
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -38,7 +53,7 @@ interface Service {
 interface ContactInfo {
   name: string;
   email: string;
-  phone?: string;
+  phone: string;
 }
 
 /* ---------------------- CONSTANTES DE TARIFAS ---------------------- */
@@ -154,7 +169,7 @@ export function calculateBookingTotal({
   if (isFlash) {
     const duration = departure - arrival;
 
-    if (departure > 21) {
+    if (departure >= 21) {
       // Salida después de las 21:00 → se convierte en noche
       breakdown.nuits = 1;
       total = PRICES.DOG_NIGHT * qty;
@@ -232,34 +247,35 @@ export function calculateBookingTotal({
 
     if (extraHours > 0) {
       // Prioridad 1: Salida > 21:00 → +1 noche (tarif séjour)
-      if (departure > 21) {
-        breakdown.nuits += 1;
-        const extraNight = PRICES.DOG_NIGHT * qty;
-        total += extraNight;
-        breakdown.lines.push({
-          label: `+1 nuit (départ après 21h)`,
-          amount: extraNight,
-        });
-        message = "Nuit supplémentaire ajoutée : départ après 21h.";
-      }
-      // CGV: dépassement > 8h → journée complète (20€)
-      else if (extraHours > 8) {
+      // if (departure > 21) {
+      //   breakdown.nuits += 1;
+      //   const extraNight = PRICES.DOG_NIGHT * qty;
+      //   total += extraNight;
+      //   breakdown.lines.push({
+      //     label: `+1 nuit (départ après 21h)`,
+      //     amount: extraNight,
+      //   });
+      //   message = "Nuit supplémentaire ajoutée : départ après 21h.";
+      // }
+      // // CGV: dépassement > 8h → journée complète (20€)
+      // else 
+      if (extraHours >= 8) {
         breakdown.flash = 1;
         const flashExtra = PRICES.DOG_FLASH * qty;
         total += flashExtra;
         breakdown.lines.push({
-          label: `+1 journée supplémentaire (prolongation > 8h)`,
+          label: `+1 journée supplémentaire (prolongation ≥ 8h)`,
           amount: flashExtra,
         });
         message = "Prolongation de plus de 8h : journée supplémentaire facturée.";
       }
       // CGV: dépassement > 3h → demi-journée (15€)
-      else if (extraHours > 3) {
+      else if (extraHours >= 3) {
         breakdown.demiFlash = 1;
         const halfFlashExtra = PRICES.DOG_HALF_FLASH * qty;
         total += halfFlashExtra;
         breakdown.lines.push({
-          label: `+½ journée (prolongation > 3h)`,
+          label: `+½ journée (prolongation ≥ 3h)`,
           amount: halfFlashExtra,
         });
         message = "Prolongation de plus de 3h : demi-journée facturée (15€).";
@@ -524,7 +540,7 @@ function CheckoutForm({
           await axios.post(`${API}/api/clients/upsert`, {
             email: contact.email,
             name: contact.name,
-            phone: contact.phone || "",
+            phone: contact.phone,
             pet: selectedPet || null,
           });
         } catch (e) {
@@ -647,14 +663,17 @@ export default function Checkout() {
     quantity,
     sizes = [],
     details,
-    arrivalTime,
-    departureTime,
+    arrivalTime: initialArrivalTime,
+    departureTime: initialDepartureTime,
     isSterilized,
     clientEmail = "",
     clientName = "",
     clientPhone = "",
     selectedPet = null,
   } = location.state || {};
+
+  const [arrivalTime, setArrivalTime] = useState<string>(initialArrivalTime || "");
+  const [departureTime, setDepartureTime] = useState<string>(initialDepartureTime || "");
 
   const [contact, setContact] = useState<ContactInfo>({
     name: clientName,
@@ -806,10 +825,11 @@ export default function Checkout() {
 
   // Validación contacto
   const validateContact = () => {
-    const errs: { name?: string; email?: string } = {};
+    const errs: { name?: string; email?: string; phone?: string } = {};
     if (!contact.name?.trim()) errs.name = "Nom requis";
     if (!/^\S+@\S+\.\S+$/.test(contact.email || ""))
       errs.email = "Email invalide";
+    if (!contact.phone?.trim()) errs.phone = "Numéro de téléphone requis";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -860,74 +880,103 @@ export default function Checkout() {
                 transition={{ duration: 0.3 }}
                 className="flex flex-col"
               >
-                <h2 className="text-3xl font-bold text-blue-700 mb-6 flex items-center gap-3 text">
+                <h2 className="text-3xl font-bold text-black mb-6 flex items-center gap-3">
                   <CalendarIcon size={28} /> Vos dates
                 </h2>
 
-                {serviceId === "flash" ? (
-                  <>
-                    <Calendar
-                      onChange={(value) => {
-                        if (!value) return;
-                        const date = Array.isArray(value) ? value[0] : value;
-                        if (date instanceof Date) {
-                          setDatepickerRange([date, date]);
-                        }
-                      }}
-                      value={datepickerRange[0]}
-                      minDate={new Date()}
-                      className="rounded-xl mx-auto shadow-lg"
-                    />
+                {/* Calendar */}
+                <div className="flex justify-center">
+                  {serviceId === "flash" ? (
+                    <div className="rounded-2xl overflow-hidden shadow-md border border-blue-100 w-full max-w-sm">
+                      <Calendar
+                        onChange={(value) => {
+                          if (!value) return;
+                          const date = Array.isArray(value) ? value[0] : value;
+                          if (date instanceof Date) {
+                            setDatepickerRange([date, date]);
+                          }
+                        }}
+                        value={datepickerRange[0]}
+                        minDate={new Date()}
+                        className="!border-0 !w-full"
+                      />
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl overflow-hidden shadow-md border border-blue-100">
+                      <DateRange
+                        ranges={[
+                          {
+                            startDate: datepickerRange?.[0] || new Date(),
+                            endDate: datepickerRange?.[1] || addDays(new Date(), 1),
+                            key: "selection",
+                          },
+                        ]}
+                        onChange={(item) => {
+                          const sel = item.selection as { startDate: Date; endDate: Date };
+                          if (sel.startDate && sel.endDate) {
+                            setDatepickerRange([sel.startDate, sel.endDate]);
+                          }
+                        }}
+                        minDate={new Date()}
+                        rangeColors={["#2563eb"]}
+                        moveRangeOnFirstSelection={false}
+                        showDateDisplay={false}
+                        direction="horizontal"
+                        months={1}
+                      />
+                    </div>
+                  )}
+                </div>
 
-                    {flashMessage}
-                  </>
-                ) : (
-                  <>
-                    <DateRange
-                      ranges={[
-                        {
-                          startDate: datepickerRange?.[0] || new Date(),
-                          endDate:
-                            datepickerRange?.[1] || addDays(new Date(), 1),
-                          key: "selection",
-                        },
-                      ]}
-                      onChange={(item: any) => {
-                        const { startDate, endDate } = item.selection;
-                        if (startDate && endDate) {
-                          setDatepickerRange([startDate, endDate]);
-                        }
-                      }}
-                      minDate={new Date()}
-                      rangeColors={["#2563eb"]}
-                      moveRangeOnFirstSelection={false}
-                      showDateDisplay={false}
-                      direction="horizontal"
-                      months={1}
-                      className="rounded-xl mx-auto shadow-lg"
-                    />
-                    {serviceId === "felin" && felinSupplementMessage}
-                  </>
-                )}
+                {serviceId === "flash" && flashMessage}
+                {serviceId === "felin" && felinSupplementMessage}
 
-                <p className="mt-6 text-center text-gray-700 text-lg font-semibold">
-                  {datepickerRange?.[0]?.toLocaleDateString("fr-FR")} →
-                  {datepickerRange?.[1]?.toLocaleDateString("fr-FR")} (
-                  {Math.max(
-                    1,
-                    Math.round(
-                      (datepickerRange?.[1]?.getTime() -
-                        datepickerRange?.[0]?.getTime()) /
-                        (1000 * 60 * 60 * 24),
-                    ),
-                  )}{" "}
-                  {service.title === "FORMULE FLASH" || serviceId === "flash"
-                    ? "journée"
-                    : "nuit(s)"}
-                  )
+                {/* Date summary */}
+                <p className="mt-4 text-center text-gray-600 text-base font-medium bg-blue-50 rounded-xl py-2 px-4 max-w-sm mx-auto">
+                  {datepickerRange?.[0]?.toLocaleDateString("fr-FR")}
+                  {serviceId !== "flash" && ` → ${datepickerRange?.[1]?.toLocaleDateString("fr-FR")}`}
+                  {" · "}
+                  <span className="text-blue-700 font-semibold">
+                    {Math.max(
+                      1,
+                      Math.round(
+                        (datepickerRange?.[1]?.getTime() -
+                          datepickerRange?.[0]?.getTime()) /
+                          (1000 * 60 * 60 * 24),
+                      ),
+                    )}{" "}
+                    {service.title === "FORMULE FLASH" || serviceId === "flash"
+                      ? "journée"
+                      : "nuits"}
+                  </span>
                 </p>
 
-                <div className="flex justify-end mt-8 max-w-md mx-auto">
+                {/* Heures */}
+                <div className="mt-6 max-w-sm mx-auto w-full">
+                  <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <Clock size={16} className="text-blue-500" /> Modifier les heures
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { label: "Heure d'arrivée", value: arrivalTime, set: setArrivalTime, options: timeOptions },
+                      { label: "Heure de départ", value: departureTime, set: setDepartureTime, options: departureTimeOptions },
+                    ].map(({ label, value, set, options }) => (
+                      <div key={label}>
+                        <label className="block text-xs text-gray-500 mb-1">{label}</label>
+                        <select
+                          value={value}
+                          onChange={(e) => set(e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">-- Heure --</option>
+                          {options.map((t) => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end mt-8 max-w-sm mx-auto w-full">
                   <button
                     onClick={nextStep}
                     className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold"
@@ -946,7 +995,7 @@ export default function Checkout() {
                 exit={{ x: -50, opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <h2 className="text-3xl font-bold text-blue-700 mb-6 flex items-center gap-3">
+                <h2 className="text-3xl font-bold text-black mb-6 flex items-center gap-3">
                   <User size={28} /> Vos coordonnées
                 </h2>
                 <form
@@ -1033,7 +1082,7 @@ export default function Checkout() {
                     <input
                       id="phone"
                       type="tel"
-                      value={contact.phone || ""}
+                      value={contact.phone}
                       onChange={(e) =>
                         setContact({ ...contact, phone: e.target.value })
                       }
@@ -1084,7 +1133,7 @@ export default function Checkout() {
                 transition={{ duration: 0.3 }}
                 className="max-w-md mx-auto"
               >
-                <h2 className="text-3xl font-bold text-blue-700 mb-6 flex items-center gap-3">
+                <h2 className="text-3xl font-bold text-black mb-6 flex items-center gap-3">
                   <Info size={28} /> Paiement
                 </h2>
 
@@ -1103,7 +1152,7 @@ export default function Checkout() {
                   </p>
                   <p className="text-xl font-bold mt-4">
                     Total :{" "}
-                    <span className="text-green-600">{total.toFixed(2)} €</span>
+                    <span className="text-blue-600">{total.toFixed(2)} €</span>
                   </p>
                   {subtleMessage && (
                     <p className="mt-2 text-sm text-gray-600">
@@ -1209,7 +1258,7 @@ export default function Checkout() {
 
             {/* Desglose detallado */}
             {breakdown.lines.length > 0 && (
-              <div className="w-full text-left space-y-2 text-sm bg-white rounded-xl p-4 shadow-inner">
+              <div className="w-full text-left space-y-2 text-sm rounded-xl p-4 shadow-inner">
                 <p className="font-bold text-gray-700 mb-2">Détail :</p>
                 {breakdown.lines.map((line, idx) => (
                   <div key={idx} className="flex justify-between">
@@ -1225,8 +1274,8 @@ export default function Checkout() {
                 {/* Promo discount line */}
                 {appliedPromo && promoDiscount > 0 && (
                   <div className="flex justify-between pt-2 border-t border-gray-200">
-                    <span className="text-green-600">{appliedPromo.label}</span>
-                    <span className="font-semibold text-green-600">-{promoDiscount.toFixed(2)} €</span>
+                    <span className="text-blue-600">{appliedPromo.label}</span>
+                    <span className="font-semibold text-blue-600">-{promoDiscount.toFixed(2)} €</span>
                   </div>
                 )}
               </div>
@@ -1238,10 +1287,10 @@ export default function Checkout() {
                 <Tag className="w-4 h-4" /> Code promo
               </p>
               {appliedPromo ? (
-                <div className="flex items-center justify-between bg-green-50 border-2 border-green-200 rounded-lg p-3">
+                <div className="flex items-center justify-between border-2 border-blue-200 rounded-lg p-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-green-600 font-bold">{appliedPromo.code}</span>
-                    <span className="text-green-700 text-sm">(-{Math.round(appliedPromo.discount * 100)}%)</span>
+                    <span className="text-blue-600 font-bold">{appliedPromo.code}</span>
+                    <span className="text-blue-700 text-sm">(-{Math.round(appliedPromo.discount * 100)}%)</span>
                   </div>
                   <button onClick={removePromoCode} className="text-red-500 hover:text-red-700 text-sm font-medium">
                     Retirer
@@ -1282,7 +1331,7 @@ export default function Checkout() {
 
             <p className="text-2xl font-bold">
               Total:{" "}
-              <span className="text-green-600">{total.toFixed(2)} €</span>
+              <span className="text-blue-600">{total.toFixed(2)} €</span>
             </p>
 
             {nights > 0 && (
