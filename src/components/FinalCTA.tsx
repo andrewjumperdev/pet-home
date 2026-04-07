@@ -33,8 +33,8 @@ const FinalCTA: React.FC = () => {
 
           {/* Headline */}
           <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Prêt à offrir les meilleures<br />
-            vacances à votre compagnon ?
+             Prêt à offrir de merveilleuses<br />
+              vacances à votre fidèle ami?
           </h2>
 
           {/* Subheadline */}

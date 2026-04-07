@@ -22,7 +22,7 @@ const AnimatedOfferBanner = () => {
           🎉 <span className="font-mono font-bold bg-yellow-300 px-1 rounded">HPYNEWCLIENT</span> · -10% sur toute première réservation
         </p>
         <p className="text-sm sm:text-base mt-1">
-          🐾 <span className="font-mono font-bold bg-yellow-300 px-1 rounded">LOVE4PET</span> · -15% sur la formule séjour
+          🐾 <span className="font-mono font-bold bg-yellow-300 px-1 rounded">LOVE4PET</span> · -10% sur la 5ème réservation séjour*
         </p>
       </div>
     </motion.div>

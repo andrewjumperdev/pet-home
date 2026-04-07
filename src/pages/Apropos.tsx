@@ -74,7 +74,7 @@ const APropos: React.FC = () => {
   const highlights = [
     { icon: MapPin, text: "Antony, Hauts-de-Seine (92)" },
     { icon: Clock, text: "Disponibles 24h/24, 7j/7" },
-    { icon: Users, text: "Garde exclusive et personnalisée" },
+    { icon: Users, text: "Attention individuelle et bienveillante" },
     { icon: PawPrint, text: "Grand parcs à proximité" },
   ];
 
@@ -382,7 +382,7 @@ const APropos: React.FC = () => {
           </h2>
           <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
             N'hésitez pas à nous contacter si vous avez une question. Nous
-            serons ravis de vous répondre et de rencontrer votre petite boule
+            serons ravis de vous répondre et de rencontrer votre boule
             d'amour !
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">

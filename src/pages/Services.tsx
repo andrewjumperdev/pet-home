@@ -135,14 +135,15 @@ export default function Services() {
                   <li key={i}>{rate}</li>
                 ))}
                 </ul>
-              </div>
+                
+              </div>              
               <CustomButton
                 label="Réservez"
                 alt="Réserver ce service"
                 variant="primary"
                 onClick={() => setModal(service)}
-              />
-            </motion.article>
+              />            
+            </motion.article>      
           ))}
         </div>
         <AnimatePresence>
@@ -154,6 +155,7 @@ export default function Services() {
             />
           )}
         </AnimatePresence>
+        <p className="mt-4 italic text-sm">*LOVE4PET applicable seulement pour la formule séjour</p>
         <div className="mt-16">
           <h3 className="text-2xl font-semibold text-center text-gray-800 mb-8">
             Ils nous ont fait confiance
