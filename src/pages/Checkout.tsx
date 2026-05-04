@@ -1283,45 +1283,54 @@ export default function Checkout() {
               </div>
             )}
 
-            {/* Code promo input */}
-            <div className="w-full mt-4">
-              <p className="font-bold text-gray-700 mb-2 text-left text-sm flex items-center gap-2">
-                <Tag className="w-4 h-4" /> Code promo
-              </p>
-              {appliedPromo ? (
-                <div className="flex items-center justify-between border-2 border-blue-200 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-blue-600 font-bold">{appliedPromo.code}</span>
-                    <span className="text-blue-700 text-sm">(-{Math.round(appliedPromo.discount * 100)}%)</span>
-                  </div>
-                  <button onClick={removePromoCode} className="text-red-500 hover:text-red-700 text-sm font-medium">
-                    Retirer
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={promoCodeInput}
-                    onChange={(e) => { setPromoCodeInput(e.target.value.toUpperCase()); setPromoError(null); }}
-                    placeholder="HPYNEWCLIENT"
-                    className="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 uppercase"
-                  />
-                  <button
-                    onClick={applyPromoCode}
-                    disabled={promoLoading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
-                  >
-                    {promoLoading ? "…" : "Appliquer"}
-                  </button>
-                </div>
-              )}
-              {promoError && (
-                <p className="text-red-500 text-xs mt-1 text-left">
-                  {promoError}
+            {/* Code promo — solo visible desde Step 1 (email ya disponible) */}
+            {step >= 1 ? (
+              <div className="w-full mt-4">
+                <p className="font-bold text-gray-700 mb-2 text-left text-sm flex items-center gap-2">
+                  <Tag className="w-4 h-4" /> Code promo
                 </p>
-              )}
-            </div>
+                {appliedPromo ? (
+                  <div className="flex items-center justify-between border-2 border-blue-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600 font-bold">{appliedPromo.code}</span>
+                      <span className="text-blue-700 text-sm">(-{Math.round(appliedPromo.discount * 100)}%)</span>
+                    </div>
+                    <button onClick={removePromoCode} className="text-red-500 hover:text-red-700 text-sm font-medium">
+                      Retirer
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoCodeInput}
+                      onChange={(e) => { setPromoCodeInput(e.target.value.toUpperCase()); setPromoError(null); }}
+                      placeholder="HPYNEWCLIENT"
+                      className="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 uppercase"
+                    />
+                    <button
+                      onClick={applyPromoCode}
+                      disabled={promoLoading}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
+                    >
+                      {promoLoading ? "…" : "Appliquer"}
+                    </button>
+                  </div>
+                )}
+                {promoError && (
+                  <p className="text-red-500 text-xs mt-1 text-left">
+                    {promoError}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="w-full mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                <p className="text-xs text-blue-600 text-center">
+                  <Tag className="w-3 h-3 inline mr-1" />
+                  Entrez vos coordonnées à l'étape 2 pour appliquer un code promo
+                </p>
+              </div>
+            )}
 
             {subtleMessage && (
               <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded-lg mt-2">
