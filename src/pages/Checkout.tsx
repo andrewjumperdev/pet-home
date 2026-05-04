@@ -715,8 +715,16 @@ export default function Checkout() {
         setPromoError(res.data.message || "Code promo invalide");
         setAppliedPromo(null);
       }
-    } catch {
-      setPromoError("Erreur de vérification. Réessayez.");
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { status: number; data?: { message?: string } }; message?: string };
+      if (axiosErr?.response?.data?.message) {
+        setPromoError(axiosErr.response.data.message);
+      } else if (axiosErr?.response?.status === 400) {
+        setPromoError("Veuillez entrer votre email à l'étape 2 avant d'appliquer un code promo.");
+      } else {
+        console.error("[Promo] Error:", axiosErr?.message, axiosErr?.response);
+        setPromoError("Erreur de vérification. Réessayez.");
+      }
     } finally {
       setPromoLoading(false);
     }
