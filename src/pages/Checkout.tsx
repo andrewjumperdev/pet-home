@@ -698,12 +698,14 @@ export default function Checkout() {
   const applyPromoCode = async () => {
     const code = promoCodeInput.trim().toUpperCase();
     if (!code) { setPromoError("Veuillez entrer un code promo"); return; }
+    const emailForPromo = contact.email?.trim() || clientEmail?.trim();
+    if (!emailForPromo) { setPromoError("Veuillez d'abord entrer votre email (étape 2)"); return; }
     setPromoLoading(true);
     setPromoError(null);
     try {
       const res = await axios.post(`${API}/api/promo/validate`, {
         code,
-        email: contact.email || clientEmail,
+        email: emailForPromo,
         serviceId: serviceId,
       });
       if (res.data.valid) {
